@@ -44,6 +44,8 @@ from data_loading import get_r_spectrum, get_filename, save_plot
 np.set_printoptions(threshold=40)
 
 
+##
+
 def new_multilay(x: np.array, c: float, d: float):
     M_ = np.full((len(x), 2, 2), [[1, 0], [0, 1]])
     tau = 2 * ntilde[0] / (ntilde[0] + ntilde[1])
