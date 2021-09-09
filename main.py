@@ -4,6 +4,7 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 from functions import *
+import serial
 
 
 def multilayer(x: np.array, c: float, d: float):
@@ -22,6 +23,8 @@ def multilayer(x: np.array, c: float, d: float):
 
 
 if __name__ == '__main__':
+    arduino = serial.Serial(port='COM4', baudrate=9600, timeout=0.1)
+    arduino.write(bytes("L", 'utf-8'))
     # Starting variables
     lambda_start = 480
     lambda_end = 800
@@ -66,13 +69,10 @@ if __name__ == '__main__':
         next_file = get_spectra_filename(i + 1)
         current_file = get_spectra_filename(i)
         if (path_to_files / next_file).is_file():
-            time_Start = time.time()
             spectrum_data_from_file = np.genfromtxt(path_to_files / get_spectra_filename(i), delimiter='\t',
-                                                    skip_header=17,
-                                                    skip_footer=1)
+                                                    skip_header=17, skip_footer=1)
             intensity_spectrum = interpolate(reference_spectrum_data[0], spectrum_data_from_file[:, 1], lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
-
             fitted_values, pcov = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
                                             bounds=((fitted_values[0], 0.9), (fitted_values[0] + 50, 1.1)))
             thickness_history.append(round(fitted_values[0], 3))
@@ -81,8 +81,8 @@ if __name__ == '__main__':
             plot_data(lambda_range, real_data, fitted_data, current_file, fitted_values, r_squared)
             save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(current_file[:-4], *fitted_values))
             i += 1
-        else:
-            print("waiting...")
+
+    arduino.write(bytes("H", 'utf-8'))
     anodizing_time = np.arange(0, time_interval * (i - 1), time_interval)
     plt.plot(anodizing_time, thickness_history)
     plt.xlabel("Time (s)")
