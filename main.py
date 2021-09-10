@@ -24,7 +24,7 @@ def multilayer(x: np.array, c: float, d: float):
 
 if __name__ == '__main__':
     arduino = serial.Serial(port='COM4', baudrate=9600, timeout=0.1)
-    arduino.write(bytes("L", 'utf-8'))
+    arduino.write(bytes('0', 'utf-8'))
     # Starting variables
     lambda_start = 480
     lambda_end = 800
@@ -82,7 +82,7 @@ if __name__ == '__main__':
             save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(current_file[:-4], *fitted_values))
             i += 1
 
-    arduino.write(bytes("H", 'utf-8'))
+    arduino.write(bytes('1', 'utf-8'))
     anodizing_time = np.arange(0, time_interval * (i - 1), time_interval)
     plt.plot(anodizing_time, thickness_history)
     plt.xlabel("Time (s)")
