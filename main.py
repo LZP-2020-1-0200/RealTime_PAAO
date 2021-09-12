@@ -1,9 +1,10 @@
 import numpy as np
-import time
+from time import perf_counter_ns
 from pathlib import Path
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 from functions import *
+import pandas as pd
 import serial
 
 
@@ -34,9 +35,9 @@ if __name__ == '__main__':
     desirable_thickness = 253
 
     # Variables for paths
-    path_to_refractive_info = Path("C:/Users/Vladislavs/PycharmProjects/RealTime_PAAO/Refractive_info/")
-    path_for_plots = Path("S:/Plots/")
-    path_to_files = Path("C:/Users/Vladislavs/Desktop/Anodesanas spektru dati/AJ-5-04-27 2nd anod/")
+    path_to_refractive_info = Path("Refractive_info/")
+    path_for_plots = Path("Plots/")
+    path_to_files = Path("Anodesanas spektru dati/AJ-5-04-27 2nd anod/")
 
     # M. Daimon and A. Masumura. Measurement of the refractive index of distilled water from the near-infrared region
     # to the ultraviolet region, Appl. Opt. 46, 3811-3820 (2007)
@@ -69,9 +70,11 @@ if __name__ == '__main__':
         next_file = get_spectra_filename(i + 1)
         current_file = get_spectra_filename(i)
         if (path_to_files / next_file).is_file():
-            spectrum_data_from_file = np.genfromtxt(path_to_files / get_spectra_filename(i), delimiter='\t',
-                                                    skip_header=17, skip_footer=1)
-            intensity_spectrum = interpolate(reference_spectrum_data[0], spectrum_data_from_file[:, 1], lambda_range)
+            spectrum_data_from_file = pd.read_csv(path_to_files / get_spectra_filename(i), delimiter='\t', header=None,
+                                                  skiprows=17)
+            spectrum_data_from_file.drop(spectrum_data_from_file.tail(1).index, inplace=True)
+            spectrum_data_from_file = spectrum_data_from_file.to_numpy(np.double)
+            intensity_spectrum = interpolate(spectrum_data_from_file[:, 0], spectrum_data_from_file[:, 1], lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
             fitted_values, pcov = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
                                             bounds=((fitted_values[0], 0.9), (fitted_values[0] + 50, 1.1)))
