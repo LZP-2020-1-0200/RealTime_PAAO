@@ -1,10 +1,11 @@
 import numpy as np
+import pandas as pd
 from time import perf_counter_ns
 from pathlib import Path
 from matplotlib import pyplot as plt
+from scipy import optimize
 from scipy.optimize import curve_fit
 from functions import *
-import pandas as pd
 import serial
 
 
@@ -17,8 +18,7 @@ def multilayer(x: np.array, c: float, d: float):
     k = ntilde[1] * 2 * np.pi / x
     P = np.array([[np.exp(j * k * c), np.zeros(len(x))], [np.zeros(len(x)), np.exp(-j * k * c)]])
     M = M @ P.T
-    hey = (ntilde[1] - ntilde[2]) / (ntilde[1] + ntilde[2])
-    Ef = np.array([[np.ones(len(x))], [hey]]).T.reshape(len(x), 2, 1)
+    Ef = np.array([[np.ones(len(x))], [(ntilde[1] - ntilde[2]) / (ntilde[1] + ntilde[2])]]).T.reshape(len(x), 2, 1)
     E_0 = M @ Ef
     return (abs(E_0[0:len(x), 1] / E_0[0:len(x), 0]) ** 2)[:, 0] * d
 
@@ -26,11 +26,12 @@ def multilayer(x: np.array, c: float, d: float):
 if __name__ == '__main__':
     arduino = serial.Serial(port='COM4', baudrate=9600, timeout=0.1)
     arduino.write(bytes('0', 'utf-8'))
+
     # Starting variables
     lambda_start = 480
     lambda_end = 800
     lambda_range = np.arange(lambda_start, lambda_end + 1)
-    time_interval = 0.5
+    time_interval = 0.28
     j = complex(0, 1)
     desirable_thickness = 253
 
@@ -64,30 +65,39 @@ if __name__ == '__main__':
     reference_spectrum = interpolate(*reference_spectrum_data, lambda_range)
 
     fitted_values = [90, 1]
-    i = 1
+    real_data_history = []
     thickness_history = []
+    skip_lines = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 3665, 3666]
+
+    i = 1
     while fitted_values[0] < desirable_thickness:
         next_file = get_spectra_filename(i + 1)
         current_file = get_spectra_filename(i)
         if (path_to_files / next_file).is_file():
-            spectrum_data_from_file = pd.read_csv(path_to_files / get_spectra_filename(i), delimiter='\t', header=None,
-                                                  skiprows=17)
-            spectrum_data_from_file.drop(spectrum_data_from_file.tail(1).index, inplace=True)
-            spectrum_data_from_file = spectrum_data_from_file.to_numpy(np.double)
-            intensity_spectrum = interpolate(spectrum_data_from_file[:, 0], spectrum_data_from_file[:, 1], lambda_range)
+            spectrum_from_file = pd.read_csv(path_to_files / current_file, delimiter='\t', skiprows=skip_lines,
+                                             dtype=np.double, names=["Wavelength", "Intensity"])
+            intensity_spectrum = interpolate(spectrum_from_file["Wavelength"], spectrum_from_file["Intensity"],
+                                             lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
+            real_data_history.append(real_data)
             fitted_values, pcov = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
-                                            bounds=((fitted_values[0], 0.9), (fitted_values[0] + 50, 1.1)))
-            thickness_history.append(round(fitted_values[0], 3))
-            fitted_data = multilayer(lambda_range, *fitted_values)
-            r_squared = calculate_r_squared(real_data, fitted_data)
-            plot_data(lambda_range, real_data, fitted_data, current_file, fitted_values, r_squared)
-            save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(current_file[:-4], *fitted_values))
+                                            bounds=((fitted_values[0], 0.9), (fitted_values[0] + 20, 1.1)))
+            thickness_history.append(np.round(fitted_values, 3))
             i += 1
 
+    # Saving plots in disk after all data is collected
+    for counter, (data, values) in enumerate(zip(real_data_history, thickness_history)):
+        plot_filename = get_spectra_filename(counter + 1)
+        fitted_data = multilayer(lambda_range, *values)
+        r_squared = calculate_r_squared(data, fitted_data)
+        plot_data(lambda_range, data, fitted_data, plot_filename, values, r_squared)
+        save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(plot_filename[:-4], *values))
+
     arduino.write(bytes('1', 'utf-8'))
+    thickness_history = np.array(thickness_history)
     anodizing_time = np.arange(0, time_interval * (i - 1), time_interval)
-    plt.plot(anodizing_time, thickness_history)
+
+    plt.plot(anodizing_time, thickness_history[:, 0])
     plt.xlabel("Time (s)")
     plt.ylabel("Thickness (nm)")
     plt.title("PAAO thickness dependence on anodization time")
