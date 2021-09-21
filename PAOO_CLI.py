@@ -7,8 +7,11 @@ from scipy import optimize
 from scipy.optimize import curve_fit
 from functions import *
 import serial
+import time
+from line_profiler_pycharm import profile
+import functools
 
-
+@profile
 def multilayer(x: np.array, c: float, d: float):
     M_ = np.full((len(x), 2, 2), [[1, 0], [0, 1]])
     tau = 2 * ntilde[0] / (ntilde[0] + ntilde[1])
@@ -24,8 +27,9 @@ def multilayer(x: np.array, c: float, d: float):
 
 
 if __name__ == '__main__':
-    arduino = serial.Serial(port='COM4', baudrate=9600, timeout=0.1)
-    arduino.write(bytes('0', 'utf-8'))
+    arduino = serial.Serial(port='COM3', baudrate=9600, timeout=0.1)
+    arduino.write(bytes('2', 'utf-8'))
+    arduino.write(bytes('3', 'utf-8'))
 
     # Starting variables
     lambda_start = 480
@@ -50,7 +54,8 @@ if __name__ == '__main__':
 
     # A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for
     # vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998)
-    al_data = np.genfromtxt(path_to_refractive_info / "Rakic-BB.yml.txt", delimiter=' ', skip_header=9, skip_footer=3)
+    al_data = np.genfromtxt(path_to_refractive_info / "Rakic-BB.yml.txt", delimiter=' ', skip_header=9, skip_footer=3,
+                            encoding='utf-8')
     nk_al_from_data = split_to_arrays(al_data, 1e3)
     nk_al = interpolate(*nk_al_from_data, lambda_range)
 
@@ -70,7 +75,10 @@ if __name__ == '__main__':
     skip_lines = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 3665, 3666]
 
     i = 1
+    time_Start = time.time()
     while fitted_values[0] < desirable_thickness:
+        if i % 20 == 0:
+            arduino.write(bytes('0', 'utf-8'))
         next_file = get_spectra_filename(i + 1)
         current_file = get_spectra_filename(i)
         if (path_to_files / next_file).is_file():
@@ -83,15 +91,19 @@ if __name__ == '__main__':
             fitted_values, pcov = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
                                             bounds=((fitted_values[0], 0.9), (fitted_values[0] + 20, 1.1)))
             thickness_history.append(np.round(fitted_values, 3))
+            if i % 20 == 0:
+                arduino.write(bytes('3', 'utf-8'))
             i += 1
+    time_end=time.time()
+    print(((time_end-time_Start)/i)*1e3)
 
-    # Saving plots in disk after all data is collected
-    for counter, (data, values) in enumerate(zip(real_data_history, thickness_history)):
-        plot_filename = get_spectra_filename(counter + 1)
-        fitted_data = multilayer(lambda_range, *values)
-        r_squared = calculate_r_squared(data, fitted_data)
-        plot_data(lambda_range, data, fitted_data, plot_filename, values, r_squared)
-        save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(plot_filename[:-4], *values))
+    # # Saving plots in disk after all data is collected
+    # for counter, (data, values) in enumerate(zip(real_data_history, thickness_history)):
+    #     plot_filename = get_spectra_filename(counter + 1)
+    #     fitted_data = multilayer(lambda_range, *values)
+    #     r_squared = calculate_r_squared(data, fitted_data)
+    #     plot_data(lambda_range, data, fitted_data, plot_filename, values, r_squared)
+    #     save_plot(path_for_plots, "{} d={:.2f} m={:.3f}.png".format(plot_filename[:-4], *values))
 
     arduino.write(bytes('1', 'utf-8'))
     thickness_history = np.array(thickness_history)
