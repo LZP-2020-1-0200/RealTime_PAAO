@@ -221,7 +221,7 @@ layout = [[sg.Text('Choose COM Port:', font=text_font, s=25),
            sg.Input('', key='DESIRED-THICK', s=(12, 2), enable_events=True, justification='c',
                     font=text_font,
                     pad=((5, 9), (0, 0))),
-           sg.Image(bad_image, key='DESIRED-THICK-IMG'), sg.Button('+10', key='+10', font=text_font)],
+           sg.Image(bad_image, key='DESIRED-THICK-IMG')],
           [sg.Text('Time Interval (ms):', font=text_font, s=25),
            sg.Input('', key='TIME-INTERVAL', enable_events=True, s=12, font=text_font, justification='c',
                     pad=((5, 9), (0, 0))),
@@ -239,15 +239,15 @@ layout = [[sg.Text('Choose COM Port:', font=text_font, s=25),
           [sg.Button('Pause', key='PAUSE', expand_x=True, font=button_font, disabled=True)]]
 
 input_layout = sg.Frame(layout=layout, title='',
-                        expand_x=True, element_justification='left')
+                        expand_x=True, element_justification='left',expand_y=True)
 
-save_layout = [[sg.Button('+10', expand_x=True)]]
+save_layout = [[sg.Button('+10', expand_x=True,key='+10',font=button_font)]]
 
 save_layout = sg.Frame(layout=save_layout, title='', expand_y=True, expand_x=True,font=button_font)
 
 final_layout = [[canvas_layout], [input_layout, save_layout]]
 
-window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True)
+window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True,debugger_enabled=True)
 
 # Canvas drwaing
 canvas_elem = window['-CANVAS-']
