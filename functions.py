@@ -1,5 +1,6 @@
 import enlighten
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
 
@@ -39,9 +40,13 @@ def save_plots(thickness_history, save_path, time_interval):
         plt.yticks(np.arange(0.75, 0.90, 0.05))
         plt.xlabel("Wavelength (nm)")
         plt.ylabel("Reflection (a.u.)")
-        plt.title("file={}  d={}  m={}".format(
-            get_spectra_filename(i + 1), *z))
-        plt.savefig(save_path / (get_spectra_filename(i + 1)[:-4] + '.png'))
+        spectra_filename = get_spectra_filename(i + 1)
+        plt.title("file={}  d={}  m={}".format(spectra_filename, *z))
+        plt.savefig(save_path / (spectra_filename[:-4] + '.png'))
+        for_saving = pd.DataFrame({'Wavelength (nm)'  : lambda_range,
+                                   'Experimental data': x,
+                                   'Fitted data'      : y})
+        for_saving.to_csv(save_path / (spectra_filename[:-4] + '.dat'), sep='\t', index=False)
         progress_bar.update()
     plt.clf()
     thickness_history_array = np.array(thickness_history)[:, 0]
@@ -50,4 +55,7 @@ def save_plots(thickness_history, save_path, time_interval):
     plt.ylabel("Thickness (nm)")
     plt.title("PAAO thickness dependence on anodization time")
     plt.savefig(save_path / ('Thickness_per_time.png'))
+    anod_in_time = pd.DataFrame({'Time (s)'      : time_fro_plot[:len(thickness_history_array)],
+                                 'Thickness (nm)': thickness_history_array})
+    anod_in_time.to_csv(save_path / 'Thickness_per_time.dat', sep='\t', index=False)
     input('Finished!\nPress enter to exit\n')

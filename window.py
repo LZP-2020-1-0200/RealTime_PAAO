@@ -104,7 +104,7 @@ class GraphicalInterface:
         final_layout = [[canvas_layout], [input_layout, save_layout]]
 
         self.window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True,
-                                debugger_enabled=False)
+                                debugger_enabled=False, icon='icon.ico')
 
         # Canvas drawing
         canvas_elem = self.window['-CANVAS-']

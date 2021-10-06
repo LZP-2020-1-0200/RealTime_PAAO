@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import PySimpleGUI as sg
 import serial.tools.list_ports
-from pandas import read_csv
+import pandas as pd
 from scipy.optimize import curve_fit
 
 from functions import get_spectra_filename, interpolate, save_plots, split_to_arrays
@@ -103,7 +103,7 @@ def fitting():
         current_file = get_spectra_filename(i)
         if (data_folder / next_file).is_file():
             gui.window['START'].update(text='Working...')
-            spectrum_from_file = read_csv(data_folder / current_file, delimiter='\t', skiprows=skip_lines,
+            spectrum_from_file = pd.read_csv(data_folder / current_file, delimiter='\t', skiprows=skip_lines,
                                           dtype=np.double, names=["Wavelength", "Intensity"])
             intensity_spectrum = interpolate(spectrum_from_file["Wavelength"], spectrum_from_file["Intensity"],
                                              lambda_range)
