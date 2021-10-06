@@ -129,7 +129,7 @@ class GraphicalInterface:
         self.fig_agg2 = draw_figure(canvas2, fig2)
 
     def disable_or_enable_buttons(self, condition):
-        self.window['START'].update(text='Waiting for files...')
+        #self.window['START'].update(text='Waiting for files...')
         self.window['START'].update(disabled=condition)
         self.window['PAUSE'].update(disabled=not condition)
 

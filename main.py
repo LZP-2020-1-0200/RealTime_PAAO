@@ -7,6 +7,8 @@ import PySimpleGUI as sg
 import serial.tools.list_ports
 import pandas as pd
 from scipy.optimize import curve_fit
+from datetime import datetime
+import os
 
 from functions import get_spectra_filename, interpolate, save_plots, split_to_arrays
 from ntilde import create_ntilde, get_al203_data, get_al_data_from_file, get_water_data_from_file
@@ -71,6 +73,10 @@ def plotting1():
 
             thickness_history_plotting = np.array(thickness_history)[:, 0]
 
+            anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
+                                                                         str((round(anodizing_time[i], 3))))
+            gui.ax.set_title(anodizing_time_title)
+            gui.ax2.set_title(current_file)
             gui.ax.plot(anodizing_time[:len(thickness_history_plotting)], thickness_history_plotting)
             gui.ax2.plot(lambda_range, real_data, lambda_range, fitted_data)
 
@@ -80,16 +86,10 @@ def plotting1():
             gui.ax2.set_xticks(np.arange(480, 820, 40))
             gui.ax2.set_yticks(np.arange(0.75, 1.0, 0.05))
 
-            anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
-                                                                         str((round(anodizing_time[i], 3))))
-            gui.ax.set_title(anodizing_time_title)
-
-            gui.ax2.set_title(current_file)
-
             gui.fig_agg.draw()
             gui.fig_agg2.draw()
         except:
-            time.sleep(0.015)
+            pass
 
 
 def fitting():
@@ -104,13 +104,13 @@ def fitting():
         if (data_folder / next_file).is_file():
             gui.window['START'].update(text='Working...')
             spectrum_from_file = pd.read_csv(data_folder / current_file, delimiter='\t', skiprows=skip_lines,
-                                          dtype=np.double, names=["Wavelength", "Intensity"])
+                                             dtype=np.double, names=["Wavelength", "Intensity"])
             intensity_spectrum = interpolate(spectrum_from_file["Wavelength"], spectrum_from_file["Intensity"],
                                              lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
             real_data_history.append(real_data)
             fitted_values, _ = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
-                                         bounds=((fitted_values[0], 0.9), (fitted_values[0] + 50, 1.1)))
+                                         bounds=((fitted_values[0], 0.9), (fitted_values[0] + 5, 1.1)))
             fitted_data = multilayer(lambda_range, *fitted_values)
             fitted_history.append(fitted_data)
 
@@ -239,4 +239,14 @@ while True:
 
 if save_path:
     gui.exit()
+    files = data_folder.rglob('*.txt')
+    files = [x for x in files if x.name != 'ref_spektrs.txt']
+    times = []
+    for b in files:
+        a = os.path.getctime(b)
+        times.append(a)
+
+    pd_series = pd.DataFrame({'time': times})
+    avg_time_interval = pd_series.diff().dropna().mean() * 1e3
+    print(avg_time_interval)
     save_plots(thickness_history, save_path, time_interval)
