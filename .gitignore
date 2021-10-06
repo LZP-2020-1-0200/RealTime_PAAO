@@ -7,5 +7,5 @@
 /Plots/
 /build/
 PAOO_GUI.spec
-/fitted_data.npy
-/real_data.npy
+fitted_data.npy
+real_data.npy

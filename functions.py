@@ -29,7 +29,7 @@ def get_spectra_filename(i):
 def save_plots(thickness_history, save_path, time_interval):
     real_data = np.load('real_data.npy')
     fitted_data = np.load('fitted_data.npy')
-    time_fro_plot = np.arange(0, time_interval * 30000, time_interval)
+    time_fro_plot = np.round(np.arange(0, time_interval * 30000, time_interval),5)
     lambda_range = np.arange(480, 800 + 1)
     progress_bar = enlighten.Counter(total=len(fitted_data), desc='Saving', unit='plots')
     for i, (x, y, z) in enumerate(zip(real_data, fitted_data, thickness_history)):

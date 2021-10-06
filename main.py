@@ -1,14 +1,14 @@
+import os
 import threading
-import time
 from pathlib import Path
 
+import enlighten
 import numpy as np
+import pandas as pd
 import PySimpleGUI as sg
 import serial.tools.list_ports
-import pandas as pd
+from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
-from datetime import datetime
-import os
 
 from functions import get_spectra_filename, interpolate, save_plots, split_to_arrays
 from ntilde import create_ntilde, get_al203_data, get_al_data_from_file, get_water_data_from_file
@@ -72,16 +72,16 @@ def plotting1():
             clear_axis(gui.ax2, lambda_range[0], lambda_range[-1], 0.75, 0.95)
 
             thickness_history_plotting = np.array(thickness_history)[:, 0]
-
-            anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
-                                                                         str((round(anodizing_time[i], 3))))
-            gui.ax.set_title(anodizing_time_title)
-            gui.ax2.set_title(current_file)
             gui.ax.plot(anodizing_time[:len(thickness_history_plotting)], thickness_history_plotting)
             gui.ax2.plot(lambda_range, real_data, lambda_range, fitted_data)
 
             set_plot_labels(gui.ax, 'Time (s)', 'Thickness (nm)')
             set_plot_labels(gui.ax2, 'Wavelength (nm)', 'Reflection (a.u.)')
+
+            anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
+                                                                         str((round(anodizing_time[i], 3))))
+            gui.ax.set_title(anodizing_time_title)
+            gui.ax2.set_title(current_file)
 
             gui.ax2.set_xticks(np.arange(480, 820, 40))
             gui.ax2.set_yticks(np.arange(0.75, 1.0, 0.05))
@@ -110,7 +110,7 @@ def fitting():
             real_data = (intensity_spectrum / reference_spectrum) * R0
             real_data_history.append(real_data)
             fitted_values, _ = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
-                                         bounds=((fitted_values[0], 0.9), (fitted_values[0] + 5, 1.1)))
+                                         bounds=((fitted_values[0] - 0.5, 0.9), (fitted_values[0] + 1.5, 1.1)))
             fitted_data = multilayer(lambda_range, *fitted_values)
             fitted_history.append(fitted_data)
 
@@ -241,12 +241,12 @@ if save_path:
     gui.exit()
     files = data_folder.rglob('*.txt')
     files = [x for x in files if x.name != 'ref_spektrs.txt']
-    times = []
-    for b in files:
-        a = os.path.getctime(b)
-        times.append(a)
+    time_history = []
+    for file in files:
+        time = os.path.getmtime(file)
+        time_history.append(time)
 
-    pd_series = pd.DataFrame({'time': times})
-    avg_time_interval = pd_series.diff().dropna().mean() * 1e3
-    print(avg_time_interval)
-    save_plots(thickness_history, save_path, time_interval)
+    pd_series = pd.DataFrame({'time': time_history})
+    avg_time_interval = float(pd_series.diff().dropna().mean())
+    # print(avg_time_interval)
+    save_plots(thickness_history, save_path, avg_time_interval)
