@@ -2,12 +2,10 @@ import os
 import threading
 from pathlib import Path
 
-import enlighten
 import numpy as np
 import pandas as pd
 import PySimpleGUI as sg
 import serial.tools.list_ports
-from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 from functions import get_spectra_filename, interpolate, save_plots, split_to_arrays
@@ -38,14 +36,21 @@ def multilayer(x: np.array, thickness: float, normalization: float):
     return (abs(E_0[0:len(x), 1] / E_0[0:len(x), 0]) ** 2)[:, 0] * normalization
 
 
+def get_time_intervals(times):
+    history = np.array(times)
+    intervals = np.diff(history)
+    intervals = np.insert(intervals, 0, 0., axis=0)
+    return np.cumsum(intervals)
+
+
 def draw_last_plots():
     global real_data, current_file, plotting, thickness_history, i, real_data_history, fitted_data
-    clear_axis(gui.ax, 0, 350, 80, desired_thickness + 20)
+    clear_axis(gui.ax, 0, 350, 0, desired_thickness + 20)
     clear_axis(gui.ax2, lambda_range[0], lambda_range[-1], 0.75, 0.95)
 
     thickness_history_plotting = np.array(thickness_history)[:, 0]
 
-    gui.ax.plot(anodizing_time[:len(thickness_history_plotting)], thickness_history_plotting)
+    gui.ax.plot(time_history[:len(thickness_history_plotting)], thickness_history_plotting)
     gui.ax2.plot(lambda_range, real_data, lambda_range, fitted_data)
 
     set_plot_labels(gui.ax, 'Time (s)', 'Thickness (nm)')
@@ -55,7 +60,7 @@ def draw_last_plots():
     gui.ax2.set_yticks(np.arange(0.75, 1.0, 0.05))
 
     anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
-                                                                 str((round(anodizing_time[i], 3))))
+                                                                 str((round(time_history[i], 3))))
     gui.ax.set_title(anodizing_time_title)
 
     gui.ax2.set_title(current_file)
@@ -65,23 +70,23 @@ def draw_last_plots():
 
 
 def plotting1():
-    global real_data, current_file, plotting, thickness_history, i, real_data_history, fitted_data
+    global real_data, current_file, plotting, thickness_history, i, real_data_history, fitted_data, time_history
     while plotting:
         try:
-            clear_axis(gui.ax, 0, 350, 80, desired_thickness + 20)
+            clear_axis(gui.ax, 0, 350, 0, desired_thickness + 20)
             clear_axis(gui.ax2, lambda_range[0], lambda_range[-1], 0.75, 0.95)
 
             thickness_history_plotting = np.array(thickness_history)[:, 0]
-            gui.ax.plot(anodizing_time[:len(thickness_history_plotting)], thickness_history_plotting)
+            gui.ax.plot(time_history[:len(thickness_history_plotting)], thickness_history_plotting)
             gui.ax2.plot(lambda_range, real_data, lambda_range, fitted_data)
 
             set_plot_labels(gui.ax, 'Time (s)', 'Thickness (nm)')
             set_plot_labels(gui.ax2, 'Wavelength (nm)', 'Reflection (a.u.)')
 
             anodizing_time_title = 'Thickness:{}$nm$  Time:{}$s$'.format(str((round(fitted_values[0], 3))),
-                                                                         str((round(anodizing_time[i], 3))))
+                                                                         str((round(time_history[i], 3))))
             gui.ax.set_title(anodizing_time_title)
-            gui.ax2.set_title(current_file)
+            gui.ax2.set_title(current_file.name)
 
             gui.ax2.set_xticks(np.arange(480, 820, 40))
             gui.ax2.set_yticks(np.arange(0.75, 1.0, 0.05))
@@ -93,24 +98,41 @@ def plotting1():
 
 
 def fitting():
-    global fitted_values, plotting, i, real_data, current_file, thickness_history, fitted_history, fitted_data
+    global fitted_values, plotting, i, real_data, current_file, thickness_history, fitted_history, fitted_data, time_history
     skip_lines = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 3665, 3666]
     plotting = True
+    first_file, second_file = True, True
+    time_history = [0]
+    ref_time = 0
     threading.Thread(target=plotting1, daemon=True).start()
     gui.window['START'].update(text='Waiting for the files...')
     while fitted_values[0] < desired_thickness and fittings:
-        next_file = get_spectra_filename(i + 1)
-        current_file = get_spectra_filename(i)
-        if (data_folder / next_file).is_file():
+        next_file = data_folder / get_spectra_filename(i + 1)
+        current_file = data_folder / get_spectra_filename(i)
+        if next_file.is_file():
+
+            if first_file:
+                ref_time = os.path.getmtime(current_file)
+                first_file = False
+            elif second_file:
+                interval = os.path.getmtime(current_file) - ref_time
+                time_history = np.arange(0, interval * round(500 / interval, 0), interval)
+                second_file = False
+
             gui.window['START'].update(text='Working...')
-            spectrum_from_file = pd.read_csv(data_folder / current_file, delimiter='\t', skiprows=skip_lines,
+            spectrum_from_file = pd.read_csv(current_file, delimiter='\t', skiprows=skip_lines,
                                              dtype=np.double, names=["Wavelength", "Intensity"])
             intensity_spectrum = interpolate(spectrum_from_file["Wavelength"], spectrum_from_file["Intensity"],
                                              lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
             real_data_history.append(real_data)
+            bound = 2 * (time_history[i - 1] + 0.00001)
+            low_bound = fitted_values[0] - bound if fitted_values[0] - bound > 65 else 65
+            up_bound = fitted_values[0] + bound
+
             fitted_values, _ = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
-                                         bounds=((fitted_values[0] - 0.5, 0.9), (fitted_values[0] + 1.5, 1.1)))
+                                         bounds=((low_bound, 0.9), (up_bound, 1.1)))
+
             fitted_data = multilayer(lambda_range, *fitted_values)
             fitted_history.append(fitted_data)
 
@@ -136,6 +158,7 @@ i = 1
 save_path = None
 plotting, fittings = False, False
 real_data, current_file = None, None
+time_history = []
 fitted_data = None
 lambda_range = np.arange(480, 801)
 thickness_history = []
@@ -180,41 +203,32 @@ while True:
             correct_thickness = False
         update_validation_image(gui.window['DESIRED-THICK-IMG'], correct_thickness)
 
-    if event == 'TIME-INTERVAL':
-        try:
-            time_interval = np.double(values['TIME-INTERVAL'])
-            if time_interval < 100:
-                raise ValueError('Time interval must be at least 100ms!')
-            time_interval /= 1e3
-            anodizing_time = np.arange(0, time_interval * 10000, time_interval)
-            correct_time_int = True
-        except ValueError:
-            correct_time_int = False
-        update_validation_image(gui.window['TIME-INTERVAL-IMG'], correct_time_int)
+    # if event == 'TIME-INTERVAL':
+    #     try:
+    #         time_interval = np.double(values['TIME-INTERVAL'])
+    #         if time_interval < 100:
+    #             raise ValueError('Time interval must be at least 100ms!')
+    #         time_interval /= 1e3
+    #         anodizing_time = np.arange(0, time_interval * 10000, time_interval)
+    #         correct_time_int = True
+    #     except ValueError:
+    #         correct_time_int = False
+    #     update_validation_image(gui.window['TIME-INTERVAL-IMG'], correct_time_int)
 
-    if event == 'REF-SPECTRUM':
-        ref_spectrum_path = Path(sg.popup_get_file('', no_window=True, file_types=(("Text files", ".txt"),)))
-
-        if ref_spectrum_path.name == 'ref_spektrs.txt':
+    if event == 'INC-DATA':
+        correct_ref_file = False
+        data_folder = Path(sg.popup_get_folder('', no_window=True))
+        if data_folder.name and (data_folder / 'ref_spektrs.txt').is_file():
+            ref_spectrum_path = Path(data_folder / 'ref_spektrs.txt')
             reference_spectrum_from_file = np.genfromtxt(ref_spectrum_path, delimiter='\t', skip_header=17,
                                                          skip_footer=1, encoding='utf-8')
             reference_spectrum_data = split_to_arrays(reference_spectrum_from_file)
             reference_spectrum = interpolate(*reference_spectrum_data, lambda_range)
             correct_ref_file = True
-        else:
-            correct_ref_file = False
-        update_validation_image(gui.window['REF-SPECTRUM-IMG'], correct_ref_file)
-
-    if event == 'INC-DATA':
-        data_folder = Path(sg.popup_get_folder('', no_window=True))
-        if data_folder.name:
-            correct_folder = True
-        else:
-            correct_folder = False
-        update_validation_image(gui.window['INC-DATA-IMG'], correct_folder)
+        update_validation_image(gui.window['INC-DATA-IMG'], correct_ref_file)
 
     if event == 'START':
-        if correct_thickness and correct_time_int and correct_ref_file and correct_folder:
+        if correct_thickness and correct_ref_file:
             gui.disable_or_enable_buttons(True)
             fittings = True
             threading.Thread(target=fitting, daemon=True).start()
@@ -243,10 +257,18 @@ if save_path:
     files = [x for x in files if x.name != 'ref_spektrs.txt']
     time_history = []
     for file in files:
-        time = os.path.getmtime(file)
-        time_history.append(time)
+        mttime = file.stat().st_mtime
+        # timestamp = datetime.fromtimestamp(mttime)
+        # tym = timestamp.strftime("%H:%M:%S.%f")
+        time_history.append(mttime)
 
-    pd_series = pd.DataFrame({'time': time_history})
-    avg_time_interval = float(pd_series.diff().dropna().mean())
+    time_history = np.array(time_history)
+    time_interval = np.diff(time_history)
+    print(np.average(time_interval), i)
+    time_interval = np.insert(time_interval, 0, 0., axis=0)
+    print(time_interval)
+
+    # pd_series = pd.DataFrame({'time': time_history})
+    # avg_time_interval = pd_series.diff().fillna(0)
     # print(avg_time_interval)
-    save_plots(thickness_history, save_path, avg_time_interval)
+    save_plots(thickness_history, save_path, time_interval)

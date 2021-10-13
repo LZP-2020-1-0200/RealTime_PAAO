@@ -70,14 +70,10 @@ class GraphicalInterface:
                       pad=((5, 9), (0, 0))),
              sg.Image(bad_image, key='DESIRED-THICK-IMG')],
             # Time interval input
-            [sg.Text('Time Interval (ms):', font=text_font, s=25),
-             sg.Input('', key='TIME-INTERVAL', enable_events=True, s=12, font=text_font, justification='c',
-                      pad=((5, 9), (0, 0))),
-             sg.Image(bad_image, key='TIME-INTERVAL-IMG')],
-            # Reference spectrum input
-            [sg.Text('Reference spectrum:', font=text_font, s=25),
-             sg.Button('Choose file', key='REF-SPECTRUM', font=text_font, s=12),
-             sg.Image(bad_image, key='REF-SPECTRUM-IMG')],
+            # [sg.Text('Time Interval (ms):', font=text_font, s=25),
+            #  sg.Input('', key='TIME-INTERVAL', enable_events=True, s=12, font=text_font, justification='c',
+            #           pad=((5, 9), (0, 0))),
+            #  sg.Image(bad_image, key='TIME-INTERVAL-IMG')],
             # Directory with data picker
             [sg.Text('Folder with data:', font=text_font, s=25),
              sg.Button('Choose folder', key='INC-DATA', font=text_font, s=12),
@@ -134,8 +130,8 @@ class GraphicalInterface:
 
         self.window['SAVE-PLOTS'].update(disabled=condition)
         self.window['DESIRED-THICK'].update(disabled=condition)
-        self.window['TIME-INTERVAL'].update(disabled=condition)
-        self.window['REF-SPECTRUM'].update(disabled=condition)
+        #self.window['TIME-INTERVAL'].update(disabled=condition)
+        #self.window['REF-SPECTRUM'].update(disabled=condition)
         self.window['INC-DATA'].update(disabled=condition)
         self.window['ARDUINO'].update(disabled=condition)
         self.window['+10'].update(disabled=not condition)
