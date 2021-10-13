@@ -130,8 +130,6 @@ class GraphicalInterface:
 
         self.window['SAVE-PLOTS'].update(disabled=condition)
         self.window['DESIRED-THICK'].update(disabled=condition)
-        #self.window['TIME-INTERVAL'].update(disabled=condition)
-        #self.window['REF-SPECTRUM'].update(disabled=condition)
         self.window['INC-DATA'].update(disabled=condition)
         self.window['ARDUINO'].update(disabled=condition)
         self.window['+10'].update(disabled=not condition)

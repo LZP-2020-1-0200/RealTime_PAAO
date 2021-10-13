@@ -2,13 +2,15 @@ import os
 import threading
 from pathlib import Path
 
+import enlighten
 import numpy as np
 import pandas as pd
 import PySimpleGUI as sg
 import serial.tools.list_ports
+from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
-from functions import get_spectra_filename, interpolate, save_plots, split_to_arrays
+from functions import get_spectra_filename, interpolate, split_to_arrays
 from ntilde import create_ntilde, get_al203_data, get_al_data_from_file, get_water_data_from_file
 from window import clear_axis, GraphicalInterface, set_plot_labels, update_validation_image
 
@@ -34,13 +36,6 @@ def multilayer(x: np.array, thickness: float, normalization: float):
                                        (ntilde[1] + ntilde[2])]]).T.reshape(len(x), 2, 1)
     E_0 = M @ Ef
     return (abs(E_0[0:len(x), 1] / E_0[0:len(x), 0]) ** 2)[:, 0] * normalization
-
-
-def get_time_intervals(times):
-    history = np.array(times)
-    intervals = np.diff(history)
-    intervals = np.insert(intervals, 0, 0., axis=0)
-    return np.cumsum(intervals)
 
 
 def draw_last_plots():
@@ -116,6 +111,9 @@ def fitting():
                 first_file = False
             elif second_file:
                 interval = os.path.getmtime(current_file) - ref_time
+                if interval < 0.1:
+                    interval = 0.2
+                print(interval)
                 time_history = np.arange(0, interval * round(500 / interval, 0), interval)
                 second_file = False
 
@@ -126,8 +124,8 @@ def fitting():
                                              lambda_range)
             real_data = (intensity_spectrum / reference_spectrum) * R0
             real_data_history.append(real_data)
-            bound = 2 * (time_history[i - 1] + 0.00001)
-            low_bound = fitted_values[0] - bound if fitted_values[0] - bound > 65 else 65
+            bound = 3 * (time_history[i] + 0.00001)
+            low_bound = fitted_values[0] - bound if fitted_values[0] - bound > 90 else 90
             up_bound = fitted_values[0] + bound
 
             fitted_values, _ = curve_fit(multilayer, lambda_range, real_data, p0=fitted_values,
@@ -141,7 +139,6 @@ def fitting():
 
     if desired_thickness - fitted_values[0] < 4:
         np.save('real_data', real_data_history)
-        np.save('fitted_data', fitted_history)
         gui.window['PAUSE'].update(disabled=True)
         gui.window['START'].update(disabled=True, text='Done', button_color='green')
         gui.window['SAVE-PLOTS'].update(disabled=False)
@@ -151,10 +148,10 @@ def fitting():
         plotting = False
 
 
-fitted_values = [90, 1]
+fitted_values = [91, 1]
 real_data_history = []
 fitted_history = []
-i = 1
+i = 0
 save_path = None
 plotting, fittings = False, False
 real_data, current_file = None, None
@@ -202,18 +199,6 @@ while True:
         except ValueError as error:
             correct_thickness = False
         update_validation_image(gui.window['DESIRED-THICK-IMG'], correct_thickness)
-
-    # if event == 'TIME-INTERVAL':
-    #     try:
-    #         time_interval = np.double(values['TIME-INTERVAL'])
-    #         if time_interval < 100:
-    #             raise ValueError('Time interval must be at least 100ms!')
-    #         time_interval /= 1e3
-    #         anodizing_time = np.arange(0, time_interval * 10000, time_interval)
-    #         correct_time_int = True
-    #     except ValueError:
-    #         correct_time_int = False
-    #     update_validation_image(gui.window['TIME-INTERVAL-IMG'], correct_time_int)
 
     if event == 'INC-DATA':
         correct_ref_file = False
@@ -264,11 +249,49 @@ if save_path:
 
     time_history = np.array(time_history)
     time_interval = np.diff(time_history)
-    print(np.average(time_interval), i)
     time_interval = np.insert(time_interval, 0, 0., axis=0)
-    print(time_interval)
+    time_for_plot = np.cumsum(time_interval)
 
-    # pd_series = pd.DataFrame({'time': time_history})
-    # avg_time_interval = pd_series.diff().fillna(0)
-    # print(avg_time_interval)
-    save_plots(thickness_history, save_path, time_interval)
+    #
+    real_data = np.load('real_data.npy')
+    progress_bar = enlighten.Counter(total=len(real_data), desc='Saving', unit='plots')
+    fitted = [90, 1]
+    fitted_history = []
+    for i, real_dat in enumerate(real_data):
+        spectra_filename = get_spectra_filename(i)
+        low_bound = (
+            fitted[0] - (2 * (time_interval[i] + 0.00001)) if
+            fitted[0] - (2 * (time_interval[i] + 0.00001)) > 90 else 90, fitted[1] - 0.2)
+        up_bound = (fitted[0] + (2 * (time_interval[i] + 0.00001)), fitted[1] + 0.2)
+
+        fitted, _ = curve_fit(multilayer, lambda_range, real_dat, p0=fitted, bounds=(low_bound, up_bound))
+        fitted_dat = multilayer(lambda_range, *fitted)
+        fitted_history.append(fitted)
+        plt.clf()
+        plt.plot(lambda_range, real_dat, lambda_range, fitted_dat)
+        plt.xlim(480, 800)
+        plt.ylim(0.75, 0.95)
+        plt.yticks(np.arange(0.75, 0.90, 0.05))
+        plt.xlabel("Wavelength (nm)")
+        plt.ylabel("Reflection (a.u.)")
+        plt.title("file={}  d={}  m={}  t={}".format(spectra_filename, *np.round(fitted, 3),
+                                                     round((time_for_plot[i]), 3)))
+        plt.savefig(save_path / (spectra_filename[:-4] + '.png'))
+        for_saving = pd.DataFrame({'Wavelength (nm)'  : lambda_range,
+                                   'Experimental data': real_dat,
+                                   'Fitted data'      : fitted_dat})
+        for_saving.to_csv(save_path / (spectra_filename[:-4] + '.dat'), sep='\t', index=False)
+        progress_bar.update()
+    np.save('fitted_data', fitted_history)
+    plt.clf()
+
+    thickness_history_array = np.array(fitted_history)[:, 0]
+    plt.plot(time_for_plot[:len(thickness_history_array)], thickness_history_array)
+    plt.xlabel("Time (s)")
+    plt.ylabel("Thickness (nm)")
+    plt.title("PAAO thickness dependence on anodization time")
+    plt.savefig(save_path / ('Thickness_per_time.png'))
+    anod_in_time = pd.DataFrame({'Time (s)'      : time_for_plot[:len(thickness_history_array)],
+                                 'Thickness (nm)': thickness_history_array})
+    anod_in_time.to_csv(save_path / 'Thickness_per_time.dat', sep='\t', index=False)
+    input('Finished!\nPress enter to exit\n')
