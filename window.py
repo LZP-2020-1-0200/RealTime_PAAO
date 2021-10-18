@@ -29,15 +29,15 @@ def connect_arduino(ports, description):
             return serial.Serial(port=port, baudrate=9600, timeout=0.1)
 
 
-def update_validation_image(window_with_key, state):
+def validation_check(window_with_key, state):
     image = "assets\\good.png" if state else "assets\\bad.png"
     window_with_key.update(source=image)
 
 
 class GraphicalInterface:
 
-    def __init__(self, ports):
-        self.ports = ports
+    def __init__(self):
+        self.ports = serial.tools.list_ports.comports()
         self.window = None
         self.fig_agg, self.fig_agg2 = None, None
         self.ax, self.ax2 = None, None
@@ -64,40 +64,30 @@ class GraphicalInterface:
              sg.Combo([port.description for port in self.ports], font=('Verdana', 12), key='ARDUINO',
                       enable_events=True, s=(25, 2)),
              sg.Image(bad_image, key='COM-PORT-IMG')],
+
             # Desired thickness input
             [sg.Text('Desired Thickness (nm):', font=text_font, s=25),
              sg.Input('', key='DESIRED-THICK', s=(12, 2), enable_events=True, justification='c', font=text_font,
                       pad=((5, 9), (0, 0))),
              sg.Image(bad_image, key='DESIRED-THICK-IMG')],
-            # Time interval input
-            # [sg.Text('Time Interval (ms):', font=text_font, s=25),
-            #  sg.Input('', key='TIME-INTERVAL', enable_events=True, s=12, font=text_font, justification='c',
-            #           pad=((5, 9), (0, 0))),
-            #  sg.Image(bad_image, key='TIME-INTERVAL-IMG')],
+
             # Directory with data picker
             [sg.Text('Folder with data:', font=text_font, s=25),
              sg.Button('Choose folder', key='INC-DATA', font=text_font, s=12),
              sg.Image(bad_image, key='INC-DATA-IMG')],
+
             # Start button
             [sg.Button('Start', key='START', font=button_font, expand_x=True, disabled_button_color='white')],
+
             # Stop button
-            [sg.Button('Pause', key='PAUSE', expand_x=True, font=button_font, disabled=True)]]
-
-        input_layout = sg.Frame(layout=layout, title='', element_justification='left', expand_y=True, expand_x=True)
-
-        save_layout = [
-            [sg.Text('Realtime fitness correction', justification='c', expand_x=True, font=text_font)],
-
-            [sg.Button('+10nm', expand_x=True, key='+10', font=button_font, disabled=True)],
-
-            [sg.Button('-10nm', expand_x=True, key='-10', font=button_font, disabled=True)],
+            [sg.Button('Stop', key='PAUSE', expand_x=True, font=button_font, disabled=True)],
 
             [sg.Button('Save plots and Exit', key='SAVE-PLOTS', font=button_font, expand_x=True, expand_y=True,
                        disabled=True)]]
 
-        save_layout = sg.Frame(layout=save_layout, title='', expand_y=True, expand_x=True, font=button_font)
+        input_layout = sg.Frame(layout=layout, title='', element_justification='left', expand_y=True, expand_x=True)
 
-        final_layout = [[canvas_layout], [input_layout, save_layout]]
+        final_layout = [[canvas_layout], [input_layout]]
 
         self.window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True,
                                 debugger_enabled=False, icon='assets/icon.ico', titlebar_icon='assets/icon.ico')
@@ -124,16 +114,14 @@ class GraphicalInterface:
         self.fig_agg = draw_figure(canvas, fig)
         self.fig_agg2 = draw_figure(canvas2, fig2)
 
-    def disable_or_enable_buttons(self, condition):
-        self.window['START'].update(disabled=condition)
-        self.window['PAUSE'].update(disabled=not condition)
+    def disable_buttons(self):
+        self.window['START'].update(disabled=True)
+        self.window['PAUSE'].update(disabled=False)
 
-        self.window['SAVE-PLOTS'].update(disabled=condition)
-        self.window['DESIRED-THICK'].update(disabled=condition)
-        self.window['INC-DATA'].update(disabled=condition)
-        self.window['ARDUINO'].update(disabled=condition)
-        self.window['+10'].update(disabled=not condition)
-        self.window['-10'].update(disabled=not condition)
+        self.window['SAVE-PLOTS'].update(disabled=True)
+        self.window['DESIRED-THICK'].update(disabled=True)
+        self.window['INC-DATA'].update(disabled=True)
+        self.window['ARDUINO'].update(disabled=True)
 
     def exit(self):
         self.window.close()

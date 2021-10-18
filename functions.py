@@ -1,6 +1,6 @@
-import enlighten
 import numpy as np
 import pandas as pd
+import serial
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
 
@@ -15,51 +15,93 @@ def split_to_arrays(data, conversion=1):
     return [data[:, 0] * conversion, data[:, 1]]
 
 
-def get_spectra_filename(i):
+def connect_arduino(ports, description):
+    for port, desc, _ in ports:
+        if description in desc:
+            por = port
+            return serial.Serial(port=por, baudrate=9600, timeout=0.1)
+
+
+def get_spectra_filenames(number):
     number_file = {10    : "R0000",
                    100   : "R000",
                    1000  : "R00",
                    10000 : "R0",
                    100000: "R"}
     for key, value in number_file.items():
-        if i < key:
-            return value + str(i) + ".txt"
+        if number < key:
+            current_file = value + str(number) + ".txt"
+            next_file = value + str(number + 1) + ".txt" if number + 1 != key else value[:-1] + str(number + 1) + ".txt"
+            return current_file, next_file
 
 
-def save_plots(thickness_history, save_path, interval):
-    real_data = np.load('real_data.npy')
-    fitted_data = np.load('fitted_data.npy')
-    #time_fro_plot = np.round(np.arange(0, time_interval * 30000, time_interval),5)
-    lambda_range = np.arange(480, 800 + 1)
-    progress_bar = enlighten.Counter(total=len(fitted_data), desc='Saving', unit='plots')
+def get_anodizing_time(folder):
+    time_history = []
+    files = [file for file in folder.rglob('*.txt') if file.name != 'ref_spektrs.txt']
+    for file in files:
+        modified_time = file.stat().st_mtime
+        time_history.append(modified_time)
 
-    for i, (x, y, z, m) in enumerate(zip(real_data, fitted_data, thickness_history, interval)):
-            pass
+    time_history = np.diff(np.array(time_history))
+    time_interval = np.insert(time_history, 0, 0., axis=0)
+    # just in case
+    if np.average(time_interval[:200]) < 0.1:
+        time_interval = np.full(len(files), 0.25)
+        time_interval[0] = 0
+    return np.cumsum(time_interval)
 
-        # plt.clf()
-        # plt.plot(lambda_range, x, lambda_range, y)
-        # plt.xlim(480, 800)
-        # plt.ylim(0.75, 0.95)
-        # plt.yticks(np.arange(0.75, 0.90, 0.05))
-        # plt.xlabel("Wavelength (nm)")
-        # plt.ylabel("Reflection (a.u.)")
-        # spectra_filename = get_spectra_filename(i + 1)
-        # plt.title("file={}  d={}  m={}".format(spectra_filename, *z))
-        # plt.savefig(save_path / (spectra_filename[:-4] + '.png'))
-        # for_saving = pd.DataFrame({'Wavelength (nm)'  : lambda_range,
-        #                            'Experimental data': x,
-        #                            'Fitted data'      : y})
-        # for_saving.to_csv(save_path / (spectra_filename[:-4] + '.dat'), sep='\t', index=False)
-        # progress_bar.update()
+
+def clear_fitting_figure(filename, thick, time):
     plt.clf()
-    thickness_history_array = np.array(thickness_history)[:, 0]
-    time_for_plot = np.cumsum(interval)
-    plt.plot(time_for_plot[:len(thickness_history_array)], thickness_history_array)
+    plt.xlim(480, 800)
+    plt.ylim(0.75, 0.95)
+    plt.yticks(np.arange(0.75, 0.90, 0.05))
+    plt.xlabel("Wavelength (nm)")
+    plt.ylabel("Reflection (a.u.)")
+    plt.title("file={}  d={}  m={}  t={}".format(filename, *np.round(thick, 3), round(time, 3)))
+
+
+def save_fitting_figure(x, y_real, y_fitted, path, filename):
+    plt.plot(x, y_real, x, y_fitted)
+    plt.grid()
+    plt.savefig(path / (filename + '.png'))
+
+
+def save_fitting_dat(x, y_real, y_fitted, path, filename):
+    for_saving = pd.DataFrame({'Wavelength (nm)'  : x,
+                               'Experimental data': y_real,
+                               'Fitted data'      : y_fitted})
+    for_saving.to_csv(path / (filename + '.dat'), sep='\t', index=False)
+
+
+def save_anodizing_time_figure(thickness_hist, time, path):
+    plt.clf()
+    plt.plot(time[:len(thickness_hist)], thickness_hist)
     plt.xlabel("Time (s)")
     plt.ylabel("Thickness (nm)")
     plt.title("PAAO thickness dependence on anodization time")
-    plt.savefig(save_path / ('Thickness_per_time.png'))
-    anod_in_time = pd.DataFrame({'Time (s)'      : time_for_plot[:len(thickness_history_array)],
-                                 'Thickness (nm)': thickness_history_array})
-    anod_in_time.to_csv(save_path / 'Thickness_per_time.dat', sep='\t', index=False)
-    input('Finished!\nPress enter to exit\n')
+    plt.grid()
+    plt.savefig(path / 'Thickness_per_time.png')
+
+
+def save_anodizing_time_dat(thickness_hist, time, path):
+    thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
+                                   'Thickness (nm)': thickness_hist})
+    thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
+
+
+def get_real_data(current_file, reference_spectrum, lambda_range, R0):
+    skip_lines = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 3665, 3666]
+    current_file_spectrum = pd.read_csv(current_file, delimiter='\t', skiprows=skip_lines,
+                                        dtype=np.double, names=["Wavelength", "Intensity"])
+    intensity_spectrum = interpolate(current_file_spectrum["Wavelength"], current_file_spectrum["Intensity"],
+                                     lambda_range)
+
+    return (intensity_spectrum / reference_spectrum) * R0
+
+
+def get_reference_spectrum(path, lambda_range):
+    reference_spectrum_from_file = np.genfromtxt(path, delimiter='\t', skip_header=17,
+                                                 skip_footer=1, encoding='utf-8')
+    reference_spectrum_data = split_to_arrays(reference_spectrum_from_file)
+    return interpolate(*reference_spectrum_data, lambda_range)
