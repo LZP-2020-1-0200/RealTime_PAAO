@@ -3,7 +3,7 @@ import pandas as pd
 import serial
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
-
+import shutil
 
 def interpolate(x_data, y_data, new_x_data):
     return interp1d(x_data, y_data, kind='cubic')(new_x_data)
@@ -15,11 +15,11 @@ def split_to_arrays(data, conversion=1):
     return [data[:, 0] * conversion, data[:, 1]]
 
 
-def connect_arduino(ports, description):
-    for port, desc, _ in ports:
-        if description in desc:
-            por = port
-            return serial.Serial(port=por, baudrate=9600, timeout=0.1)
+# def connect_arduino(ports, description):
+#     for port, desc, _ in ports:
+#         if description in desc:
+#             por = port
+#             return serial.Serial(port=por, baudrate=9600, timeout=0.1)
 
 
 def get_spectra_filenames(number):
@@ -33,6 +33,32 @@ def get_spectra_filenames(number):
             current_file = value + str(number) + ".txt"
             next_file = value + str(number + 1) + ".txt" if number + 1 != key else value[:-1] + str(number + 1) + ".txt"
             return current_file, next_file
+
+
+def get_spectra_filenames2(dict, number):
+    for key, value in dict.items():
+        if number < key:
+            current_file = value + str(number) + ".txt"
+            next_file = value + str(number + 1) + ".txt" if number + 1 != key else value[:-1] + str(number + 1) + ".txt"
+            return current_file, next_file
+
+
+def upgraded_get_spectra_filenames(number_of_zeros, leter_before_numbers):
+    list_of_strings = []
+    list_of_keys = [10, 100, 1000, 10000, 100000, 1000000]
+    dict = {}
+    a = ""
+    list_of_strings.append(a)
+    for i in range(0, number_of_zeros):
+        a += "0"
+        list_of_strings.append(a)
+
+    list_of_ready_strings = [leter_before_numbers + k for k in list_of_strings]
+
+    for k, v in zip(list_of_keys, reversed(list_of_ready_strings)):
+        dict[k] = v
+    # print(dict)
+    return dict
 
 
 def get_anodizing_time(folder):
@@ -74,19 +100,26 @@ def save_fitting_dat(x, y_real, y_fitted, path, filename):
     for_saving.to_csv(path / (filename + '.dat'), sep='\t', index=False)
 
 
-def save_anodizing_time_figure(thickness_hist, time, path):
-    plt.clf()
-    plt.plot(time[:len(thickness_hist)], thickness_hist)
-    plt.xlabel("Time (s)")
-    plt.ylabel("Thickness (nm)")
-    plt.title("PAAO thickness dependence on anodization time")
-    plt.grid()
-    plt.savefig(path / 'Thickness_per_time.png')
+def save_anodizing_time_figure(voltage, thickness_hist, time, path):
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax1.plot(time, thickness_hist)
+    ax2.plot(time, voltage, color='orange')
+
+    ax1.set_xlabel("Time $(s)$")
+    ax1.set_ylabel("Thickness $(nm)$")
+    ax2.set_ylabel('Voltage $(V)$')
+    ax2.set_ylim(-10, 50)
+
+    ax1.grid()
+    ax1.set_title("PAAO thickness dependence on anodization time")
+    fig.savefig(path / 'Thickness_per_time.png')
 
 
-def save_anodizing_time_dat(thickness_hist, time, path):
+def save_anodizing_time_dat(voltage, thickness_hist, time, path):
     thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
-                                   'Thickness (nm)': thickness_hist})
+                                   'Thickness (nm)': thickness_hist,
+                                   'Voltage (V)'   : voltage})
     thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
 
 
@@ -105,3 +138,19 @@ def get_reference_spectrum(path, lambda_range):
                                                  skip_footer=1, encoding='utf-8')
     reference_spectrum_data = split_to_arrays(reference_spectrum_from_file)
     return interpolate(*reference_spectrum_data, lambda_range)
+
+
+def make_folder(path, folder_name):
+    full_path = path / folder_name
+    full_path.mkdir(parents=True, exist_ok=True)
+    return full_path
+
+
+def copy_files(files, to_folder):
+    for file in files:
+        shutil.copy2(file, to_folder)
+
+
+def move_file(old, new):
+    for file in old:
+        file.rename(new / file.name)

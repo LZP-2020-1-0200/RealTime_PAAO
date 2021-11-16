@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-import serial.tools.list_ports
+# import serial.tools.list_ports
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -37,10 +37,10 @@ def validation_check(window_with_key, state):
 class GraphicalInterface:
 
     def __init__(self):
-        self.ports = serial.tools.list_ports.comports()
+        # self.ports = serial.tools.list_ports.comports()
         self.window = None
         self.fig_agg, self.fig_agg2 = None, None
-        self.ax, self.ax2 = None, None
+        self.ax, self.ax2, self.ax3 = None, None, None
         self.create_window()
 
     def create_window(self):
@@ -59,11 +59,10 @@ class GraphicalInterface:
                                  expand_y=True, expand_x=True, border_width=2)
 
         layout = [
-            # todo Com port Chooser does nothing at this moment
-            [sg.Text('Choose COM Port:', font=text_font, s=25),
-             sg.Combo([port.description for port in self.ports], font=('Verdana', 12), key='ARDUINO',
-                      enable_events=True, s=(25, 2)),
-             sg.Image(bad_image, key='COM-PORT-IMG')],
+            # [sg.Text('Choose COM Port:', font=text_font, s=25),
+            #  sg.Combo([port.description for port in self.ports], font=('Verdana', 12), key='ARDUINO',
+            #           enable_events=True, s=(25, 2)),
+            #  sg.Image(bad_image, key='COM-PORT-IMG')],
 
             # Desired thickness input
             [sg.Text('Desired Thickness (nm):', font=text_font, s=25),
@@ -77,20 +76,21 @@ class GraphicalInterface:
              sg.Image(bad_image, key='INC-DATA-IMG')],
 
             # Start button
-            [sg.Button('Start', key='START', font=button_font, expand_x=True, disabled_button_color='white')],
+            [sg.Button('Start', key='START', font=button_font, disabled_button_color='white', s=(36, 1))],
 
             # Stop button
-            [sg.Button('Stop', key='PAUSE', expand_x=True, font=button_font, disabled=True)],
+            [sg.Button('Stop', key='PAUSE', font=button_font, disabled=True, s=(36, 1))],
 
-            [sg.Button('Save plots and Exit', key='SAVE-PLOTS', font=button_font, expand_x=True, expand_y=True,
-                       disabled=True)]]
+            [sg.Button('Save plots and Exit', key='SAVE-PLOTS', font=button_font,
+                       disabled=True, s=(36, 1))]]
 
-        input_layout = sg.Frame(layout=layout, title='', element_justification='left', expand_y=True, expand_x=True)
+        input_layout = sg.Frame(layout=layout, title='', element_justification='center', expand_x=True)
 
         final_layout = [[canvas_layout], [input_layout]]
 
         self.window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True,
-                                debugger_enabled=False, icon='assets/icon.ico', titlebar_icon='assets/icon.ico')
+                                debugger_enabled=False, icon='assets/icon2.ico', titlebar_icon='assets/icon2.ico',
+                                element_justification='center')
 
         # Canvas drawing
         canvas_elem = self.window['-CANVAS-']
@@ -99,20 +99,25 @@ class GraphicalInterface:
         canvas = canvas_elem.TKCanvas
         canvas2 = canvas_elem2.TKCanvas
 
-        fig, self.ax = plt.subplots(figsize=(5, 4))
-        fig2, self.ax2 = plt.subplots(figsize=(5, 4))
+        fig, self.ax = plt.subplots(figsize=(6, 4))
+        fig2, self.ax2 = plt.subplots(figsize=(6, 4))
+        self.ax3 = self.ax.twinx()
 
         self.ax.grid(True)
         self.ax2.grid(True)
+        # self.ax3.grid(True)
 
         self.ax.set_xlabel('Time (s)')
         self.ax.set_ylabel('Thickness (nm)')
+        self.ax3.set_ylabel('Voltage (V)')
 
         self.ax2.set_xlabel('Wavelength (nm)')
         self.ax2.set_ylabel('Reflection (a.u.)')
 
         self.fig_agg = draw_figure(canvas, fig)
         self.fig_agg2 = draw_figure(canvas2, fig2)
+
+        # plt.tight_layout()
 
     def disable_buttons(self):
         self.window['START'].update(disabled=True)
@@ -121,7 +126,7 @@ class GraphicalInterface:
         self.window['SAVE-PLOTS'].update(disabled=True)
         self.window['DESIRED-THICK'].update(disabled=True)
         self.window['INC-DATA'].update(disabled=True)
-        self.window['ARDUINO'].update(disabled=True)
+        # self.window['ARDUINO'].update(disabled=True)
 
     def exit(self):
         self.window.close()

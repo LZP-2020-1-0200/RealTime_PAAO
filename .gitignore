@@ -4,8 +4,7 @@
 /.idea/
 /__pycache__/
 /.vscode/
-/Plots/
 /build/
 PAOO_GUI.spec
-fitted_data.npy
-real_data.npy
+main.py.pclprof
+main.spec
