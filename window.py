@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-# import serial.tools.list_ports
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -23,12 +22,6 @@ def set_plot_labels(ax, x_label, y_label):
     ax.set_ylabel(y_label)
 
 
-def connect_arduino(ports, description):
-    for port, desc, _ in ports:
-        if description in desc:
-            return serial.Serial(port=port, baudrate=9600, timeout=0.1)
-
-
 def validation_check(window_with_key, state):
     image = "assets\\good.png" if state else "assets\\bad.png"
     window_with_key.update(source=image)
@@ -37,7 +30,6 @@ def validation_check(window_with_key, state):
 class GraphicalInterface:
 
     def __init__(self):
-        # self.ports = serial.tools.list_ports.comports()
         self.window = None
         self.fig_agg, self.fig_agg2 = None, None
         self.ax, self.ax2, self.ax3 = None, None, None
@@ -75,6 +67,8 @@ class GraphicalInterface:
              sg.Button('Choose folder', key='INC-DATA', font=text_font, s=12),
              sg.Image(bad_image, key='INC-DATA-IMG')],
 
+            [sg.Button('Start electricity',key='START-ELECTRICITY'),sg.Button('Stop electricity',key='STOP-ELECTRICITY')],
+
             # Start button
             [sg.Button('Start', key='START', font=button_font, disabled_button_color='white', s=(36, 1))],
 
@@ -109,7 +103,7 @@ class GraphicalInterface:
 
         self.ax.set_xlabel('Time (s)')
         self.ax.set_ylabel('Thickness (nm)')
-        self.ax3.set_ylabel('Voltage (V)')
+        self.ax3.set_ylabel('Current (A)')
 
         self.ax2.set_xlabel('Wavelength (nm)')
         self.ax2.set_ylabel('Reflection (a.u.)')

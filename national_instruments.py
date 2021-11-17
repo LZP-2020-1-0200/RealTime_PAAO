@@ -10,13 +10,16 @@ def get_ni_device_name():
     return ''
 
 
-def get_voltage(read_task):
-    return read_task.read()
+# def get_voltage(read_task):
+#     return read_task.read()
 
 
 def reset_tasks():
-    create_voltage_task.write(0, auto_start=True)
-    digital_output_task.write(False)
+    # testing
+    # create_voltage_task.write(0, auto_start=True)
+    # digital_output_task.write(False)
+    # real life
+    digital_output_task.write(True)
 
 
 def close_all_tasks():
@@ -26,18 +29,26 @@ def close_all_tasks():
 
 name = get_ni_device_name()
 if name:
-    create_voltage_task = nidaqmx.Task()
-    create_voltage_task.ao_channels.add_ao_voltage_chan(f"{name}/ao0", min_val=0, max_val=3.2)
-    create_voltage_task.write(0, auto_start=True)
+    # only for testing
+    # create_voltage_task = nidaqmx.Task()
+    # create_voltage_task.ao_channels.add_ao_voltage_chan(f"{name}/ao0", min_val=0, max_val=1)
+    # create_voltage_task.write(0, auto_start=True)
 
     read_voltage_task = nidaqmx.Task()
-    read_voltage_task.ai_channels.add_ai_voltage_chan(f"{name}/ai0")
+    read_voltage_task.ai_channels.add_ai_voltage_chan(f"{name}/ai0",min_val=0,max_val=1)
+    read_voltage_task.ai_channels.add_ai_current_chan()
 
     digital_output_task = nidaqmx.Task()
-    digital_output_task.do_channels.add_do_chan(f"{name}/port0/line14")
-    digital_output_task.write(False)
+    digital_output_task.do_channels.add_do_chan(f"{name}/port1/line4")
 
-    list_of_tasks = [create_voltage_task, read_voltage_task, digital_output_task]
+    # testing
+    # digital_output_task.write(False)
+
+    # real life
+    digital_output_task.write(True)
+
+    #list_of_tasks = [create_voltage_task, read_voltage_task, digital_output_task]
+    list_of_tasks = [read_voltage_task, digital_output_task]
 
 else:
     sys.exit('No National instruments device connected! Try connecting it first and then launch program again')

@@ -1,9 +1,10 @@
+import shutil
+
 import numpy as np
 import pandas as pd
-import serial
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
-import shutil
+
 
 def interpolate(x_data, y_data, new_x_data):
     return interp1d(x_data, y_data, kind='cubic')(new_x_data)
@@ -15,50 +16,30 @@ def split_to_arrays(data, conversion=1):
     return [data[:, 0] * conversion, data[:, 1]]
 
 
-# def connect_arduino(ports, description):
-#     for port, desc, _ in ports:
-#         if description in desc:
-#             por = port
-#             return serial.Serial(port=por, baudrate=9600, timeout=0.1)
-
-
-def get_spectra_filenames(number):
-    number_file = {10    : "R0000",
-                   100   : "R000",
-                   1000  : "R00",
-                   10000 : "R0",
-                   100000: "R"}
-    for key, value in number_file.items():
+def get_spectra_filenames2(dict_of_name, number):
+    for key, value in dict_of_name.items():
         if number < key:
             current_file = value + str(number) + ".txt"
             next_file = value + str(number + 1) + ".txt" if number + 1 != key else value[:-1] + str(number + 1) + ".txt"
             return current_file, next_file
 
 
-def get_spectra_filenames2(dict, number):
-    for key, value in dict.items():
-        if number < key:
-            current_file = value + str(number) + ".txt"
-            next_file = value + str(number + 1) + ".txt" if number + 1 != key else value[:-1] + str(number + 1) + ".txt"
-            return current_file, next_file
-
-
-def upgraded_get_spectra_filenames(number_of_zeros, leter_before_numbers):
+def upgraded_get_spectra_filenames(number_of_zeros, letter_before_numbers):
     list_of_strings = []
     list_of_keys = [10, 100, 1000, 10000, 100000, 1000000]
-    dict = {}
+    dict_of_names = {}
     a = ""
     list_of_strings.append(a)
-    for i in range(0, number_of_zeros):
+    for _ in range(0, number_of_zeros):
         a += "0"
         list_of_strings.append(a)
 
-    list_of_ready_strings = [leter_before_numbers + k for k in list_of_strings]
+    list_of_ready_strings = [letter_before_numbers + k for k in list_of_strings]
 
     for k, v in zip(list_of_keys, reversed(list_of_ready_strings)):
-        dict[k] = v
+        dict_of_names[k] = v
     # print(dict)
-    return dict
+    return dict_of_names
 
 
 def get_anodizing_time(folder):

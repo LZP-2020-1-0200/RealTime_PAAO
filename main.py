@@ -1,21 +1,21 @@
-import time
 import threading
+import time
 from pathlib import Path
-from line_profiler_pycharm import profile
+
 import numpy as np
 import PySimpleGUI as sg
 from enlighten import Counter
 from scipy.optimize import curve_fit
 
-from functions import clear_fitting_figure, get_anodizing_time, \
-    get_real_data, get_reference_spectrum, get_spectra_filenames, \
-    save_anodizing_time_dat, save_anodizing_time_figure, save_fitting_dat, save_fitting_figure, make_folder, \
-    copy_files, move_file, upgraded_get_spectra_filenames, get_spectra_filenames2
+from functions import clear_fitting_figure, copy_files, get_anodizing_time, get_real_data, get_reference_spectrum, \
+    get_spectra_filenames2, make_folder, move_file, save_anodizing_time_dat, save_anodizing_time_figure, \
+    save_fitting_dat, save_fitting_figure, upgraded_get_spectra_filenames
 from multilayer import LAMBDA_RANGE, multilayer, R0
+from national_instruments import close_all_tasks, digital_output_task, read_voltage_task, \
+    reset_tasks
 from window import clear_axis, GraphicalInterface, set_plot_labels, validation_check
 
-from national_instruments import create_voltage_task, read_voltage_task, digital_output_task, get_voltage, \
-    close_all_tasks, reset_tasks
+TXT_FILES = '*.txt'
 
 
 def make_folders_and_move_files(pre_end_index, post_start_index):
@@ -30,7 +30,7 @@ def make_folders_and_move_files(pre_end_index, post_start_index):
     plot_folder = make_folder(organized_folder, '4. Anodizing Plots')
     calculated_data_folder = make_folder(organized_folder, '5. Anodizing Data')
 
-    all_files = data_folder.rglob('*.txt')
+    all_files = data_folder.rglob(TXT_FILES)
     files = [x for x in all_files if x.is_file()]
     copy_files([files[-1]], anod_folder)
     move_file([files[-1]], original_folder)
@@ -52,7 +52,6 @@ def make_folders_and_move_files(pre_end_index, post_start_index):
 
 
 def plotting_process():
-    # random_voltage = [random.randrange(0, 5) for x in range(0,1000)]
     global current_real_data, current_file, plotting, thickness_history, i, current_fitted_data, \
         approx_anodizing_time, voltage_history
     while plotting:
@@ -60,15 +59,15 @@ def plotting_process():
             clear_axis(gui.ax, 0, 400, 0, desired_thickness + 20)
             clear_axis(gui.ax2, LAMBDA_RANGE[0], LAMBDA_RANGE[-1], 0.75, 0.95)
             gui.ax3.cla()
-            gui.ax3.set_ylim(-10, 50)
+            gui.ax3.set_ylim(-1, 1)
 
-            thickness_history_plot_title = 'Thickness:{:.3f}$nm$  Time:{:.3f}$s$  Voltage:{:.3f}$V$'.format(
+            thickness_history_plot_title = 'Thickness:{:.3f}$nm$  Time:{:.3f}$s$  Current:{:.3f}$A$'.format(
                 current_thickness[0], approx_anodizing_time[i], voltage_history[i])
             gui.ax.set_title(thickness_history_plot_title)
             gui.ax2.set_title(current_file.name)
 
             set_plot_labels(gui.ax, 'Time (s)', 'Thickness (nm)')
-            gui.ax3.set_ylabel('Voltage (V)')
+            gui.ax3.set_ylabel('Current (A)')
             set_plot_labels(gui.ax2, 'Wavelength (nm)', 'Reflection (a.u.)')
 
             # set_plot_labels(gui.ax3, 'Voltage (V)', 'Reflection (a.u.)')
@@ -82,11 +81,10 @@ def plotting_process():
 
             gui.fig_agg.draw()
             gui.fig_agg2.draw()
-        except:
+        except Exception as e:
             pass
 
 
-@profile
 def fitting_process():
     global current_thickness, plotting, i, current_real_data, current_file, thickness_history, fitted_data_history, \
         current_fitted_data, approx_anodizing_time, real_data_history, voltage_history, pre_anod_ending_index, \
@@ -98,7 +96,7 @@ def fitting_process():
     while fitting:
 
         if getting_file:
-            files = [str(x.name) for x in data_folder.rglob('*.txt')]
+            files = [str(x.name) for x in data_folder.rglob(TXT_FILES)]
             files.remove(ref_spectrum_name.lower())
             if len(files) > 0:
                 name = str(files[0])[:-4]
@@ -115,16 +113,17 @@ def fitting_process():
         current_file, next_file = data_folder / filenames[0], data_folder / filenames[1]
         if next_file.is_file():
             # testing purposes
-            if i == 300:
-                create_voltage_task.write(3)
-                # print((time.time() - start_time) / i)
+            # if i == 70:
+            #     create_voltage_task.write(3)
+            #     print((time.time() - start_time) / i)
+            # real life no needs
 
             current_voltage = read_voltage_task.read()
             voltage_history.append(current_voltage)
 
-            if current_voltage >= 0.5 and pre_anod_ending_index == 0:
+            if current_flowing and pre_anod_ending_index == 0:
                 pre_anod_ending_index = i
-                current_flowing = True
+                # current_flowing = True
                 # print(pre_anod_ending_index)
 
             # print(f'Pirms anodesanas no 0 lidz {pre_anod_ending_index} Anodesana no {pre_anod_ending_index} lidz {
@@ -156,11 +155,14 @@ def fitting_process():
 
             if desired_thickness <= current_thickness[0] and current_flowing:
                 post_anod_starting_index = i
+
                 current_flowing = False
-                create_voltage_task.write(0)
+                # testing purposes
+                # create_voltage_task.write(0)
+                # digital_output_task.write(True)
+                # real life
                 digital_output_task.write(True)
 
-                # Send signal to stop electricity
 
     if desired_thickness - current_thickness[0] <= 1:
         gui.window['PAUSE'].update(disabled=True)
@@ -176,11 +178,11 @@ thickness_history = []
 current_real_data, current_fitted_data = [], []
 i = 0
 plotting, fitting = False, False
-current_file = None
+current_file = Path()
 pre_anod_ending_index, post_anod_starting_index = 0, 0
 current_flowing = False
 ref_spectrum_name = ''
-anod_folder, plot_folder, calculated_data_folder, organized_folder = None, None, None, None
+anod_folder, plot_folder, calculated_data_folder, organized_folder = Path(), Path(), Path(), Path()
 allowed_name_ref_spektrs = ['ref_spektrs.txt', 'ref spektrs.txt', 'rf_spektrs.txt', 'r_spektrs.txt', 'r spektrs.txt']
 
 # Validation variables
@@ -196,16 +198,6 @@ while True:
         close_all_tasks()
         break
 
-    # if event == 'ARDUINO':
-    #     try:
-    #         arduino = connect_arduino(gui.ports, values['ARDUINO'])
-    #         arduino.write(bytes('2', 'utf-8'))
-    #         arduino.write(bytes('3', 'utf-8'))
-    #         arduino_connected = True
-    #     except:
-    #         arduino_connected = False
-    #     validation_check(gui.window['COM-PORT-IMG'], arduino_connected)
-
     if event == 'DESIRED-THICK':
         try:
             desired_thickness = float(values['DESIRED-THICK'])
@@ -219,9 +211,7 @@ while True:
     if event == 'INC-DATA':
         correct_ref_file = False
         data_folder = Path(sg.popup_get_folder('', no_window=True))
-        files = [file.name for file in data_folder.rglob('*.txt')]
-        # print(files)
-        # ref_spectrum_name = str(files[-1]) if str(files[-1]).lower() in allowed_name_ref_spektrs else str(files[0])
+        files = [file.name for file in data_folder.rglob(TXT_FILES)]
         ref_spectrum_name = ''
         if str(files[-1]).lower() in allowed_name_ref_spektrs:
             ref_spectrum_name = str(files[-1])
@@ -232,11 +222,6 @@ while True:
             ref_spectrum_path = Path(data_folder / ref_spectrum_name)
             reference_spectrum = get_reference_spectrum(ref_spectrum_path, LAMBDA_RANGE)
             correct_ref_file = True
-
-        # if data_folder.name and (data_folder / 'ref_spektrs.txt').is_file():
-        #     ref_spectrum_path = Path(data_folder / 'ref_spektrs.txt')
-        #     reference_spectrum = get_reference_spectrum(ref_spectrum_path, LAMBDA_RANGE)
-        #     correct_ref_file = True
         validation_check(gui.window['INC-DATA-IMG'], correct_ref_file)
 
     if event == 'START':
@@ -267,6 +252,18 @@ while True:
         saving = True
         break
 
+    if event == 'START-ELECTRICITY':
+        print(current_flowing)
+        current_flowing = True
+        digital_output_task.write(False)
+
+    if event == 'STOP-ELECTRICITY':
+        print(current_flowing)
+        current_flowing = False
+        digital_output_task.write(True)
+
+
+
 if saving:
     gui.exit()
     anodizing_time = get_anodizing_time(anod_folder)
@@ -277,7 +274,7 @@ if saving:
     thickness_history_anod = thickness_history[pre_anod_ending_index:post_anod_starting_index]
     voltage_history_anod = voltage_history[pre_anod_ending_index:post_anod_starting_index]
 
-    spectrum_files = [file.name for file in anod_folder.rglob('*.txt') if file.name != 'ref_spektrs.txt']
+    spectrum_files = [file.name for file in anod_folder.rglob(TXT_FILES) if file.name != 'ref_spektrs.txt']
 
     for i, file in enumerate(spectrum_files):
         clear_fitting_figure(str(file), thickness_history_anod[i], anodizing_time[i])
