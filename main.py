@@ -8,14 +8,15 @@ from enlighten import Counter
 from scipy.optimize import curve_fit
 
 from functions import clear_fitting_figure, copy_files, get_anodizing_time, get_real_data, get_reference_spectrum, \
-    get_spectra_filenames2, make_folder, move_file, save_anodizing_time_dat, save_anodizing_time_figure, \
-    save_fitting_dat, save_fitting_figure, upgraded_get_spectra_filenames
+    get_spectra_filenames2, make_folder, move_file, save_anodizing_time_and_current_plots, save_anodizing_time_dat, \
+    save_anodizing_time_figure, save_fitting_dat, save_fitting_figure, upgraded_get_spectra_filenames
 from multilayer import LAMBDA_RANGE, multilayer, R0
-from national_instruments import close_all_tasks, digital_output_task, read_voltage_task, \
-    reset_tasks
+from national_instruments import close_all_tasks, digital_output_task, read_voltage_task, reset_tasks
 from window import clear_axis, GraphicalInterface, set_plot_labels, validation_check
 
-TXT_FILES = '*.txt'
+TXT_EXTENSION = '*.txt'
+NI_VOLTAGE_TO_MA_COEFFICIENT = 0.986203059047487
+ALLOWED_REF_SPEKTRS_NAME = ['ref_spektrs.txt', 'ref spektrs.txt', 'rf_spektrs.txt', 'r_spektrs.txt', 'r spektrs.txt']
 
 
 def make_folders_and_move_files(pre_end_index, post_start_index):
@@ -30,7 +31,7 @@ def make_folders_and_move_files(pre_end_index, post_start_index):
     plot_folder = make_folder(organized_folder, '4. Anodizing Plots')
     calculated_data_folder = make_folder(organized_folder, '5. Anodizing Data')
 
-    all_files = data_folder.rglob(TXT_FILES)
+    all_files = data_folder.rglob(TXT_EXTENSION)
     files = [x for x in all_files if x.is_file()]
     copy_files([files[-1]], anod_folder)
     move_file([files[-1]], original_folder)
@@ -53,7 +54,7 @@ def make_folders_and_move_files(pre_end_index, post_start_index):
 
 def plotting_process():
     global current_real_data, current_file, plotting, thickness_history, i, current_fitted_data, \
-        approx_anodizing_time, voltage_history
+        approx_anodizing_time, milli_amp_history
     while plotting:
         try:
             clear_axis(gui.ax, 0, 400, 0, desired_thickness + 20)
@@ -61,8 +62,8 @@ def plotting_process():
             gui.ax3.cla()
             gui.ax3.set_ylim(-1, 1)
 
-            thickness_history_plot_title = 'Thickness:{:.3f}$nm$  Time:{:.3f}$s$  Current:{:.3f}$A$'.format(
-                current_thickness[0], approx_anodizing_time[i], voltage_history[i])
+            thickness_history_plot_title = 'Thickness:{:.3f}$nm$  Time:{:.3f}$s$  Current:{:.3f}$mA$'.format(
+                current_thickness[0], approx_anodizing_time[i], milli_amp_history[i])
             gui.ax.set_title(thickness_history_plot_title)
             gui.ax2.set_title(current_file.name)
 
@@ -75,7 +76,7 @@ def plotting_process():
             gui.ax2.set_yticks(np.arange(0.75, 1.0, 0.05))
             thickness_history_data = np.array(thickness_history)[:, 0]
             gui.ax.plot(approx_anodizing_time[:len(thickness_history_data)], thickness_history_data)
-            gui.ax3.plot(approx_anodizing_time[:len(thickness_history_data)], voltage_history[:len(
+            gui.ax3.plot(approx_anodizing_time[:len(thickness_history_data)], milli_amp_history[:len(
                 thickness_history_data)], color='orange')
             gui.ax2.plot(LAMBDA_RANGE, current_real_data, LAMBDA_RANGE, current_fitted_data)
 
@@ -87,7 +88,7 @@ def plotting_process():
 
 def fitting_process():
     global current_thickness, plotting, i, current_real_data, current_file, thickness_history, fitted_data_history, \
-        current_fitted_data, approx_anodizing_time, real_data_history, voltage_history, pre_anod_ending_index, \
+        current_fitted_data, approx_anodizing_time, real_data_history, milli_amp_history, pre_anod_ending_index, \
         post_anod_starting_index, current_flowing, ref_spectrum_name
 
     getting_file = True
@@ -96,20 +97,20 @@ def fitting_process():
     while fitting:
 
         if getting_file:
-            files = [str(x.name) for x in data_folder.rglob(TXT_FILES)]
+            files = [str(x.name) for x in data_folder.rglob(TXT_EXTENSION)]
             files.remove(ref_spectrum_name.lower())
             if len(files) > 0:
                 name = str(files[0])[:-4]
                 number_of_zeros = name.count('0') - 1
-                begining = name[:len(name) - (number_of_zeros + 1)]
-                dict = upgraded_get_spectra_filenames(number_of_zeros, begining)
+                filename_start_letter = name[:len(name) - (number_of_zeros + 1)]
+                dict_of_filenames = upgraded_get_spectra_filenames(number_of_zeros, filename_start_letter)
                 getting_file = False
             continue
 
         # if getting_file:
         #     filenames = get_spectra_filenames(i)
         # else:
-        filenames = get_spectra_filenames2(dict, i)
+        filenames = get_spectra_filenames2(dict_of_filenames, i)
         current_file, next_file = data_folder / filenames[0], data_folder / filenames[1]
         if next_file.is_file():
             # testing purposes
@@ -118,8 +119,9 @@ def fitting_process():
             #     print((time.time() - start_time) / i)
             # real life no needs
 
-            current_voltage = read_voltage_task.read()
-            voltage_history.append(current_voltage)
+            current_milli_volt = (read_voltage_task.read() * 1000)
+            current_milli_amp = current_milli_volt / NI_VOLTAGE_TO_MA_COEFFICIENT
+            milli_amp_history.append(current_milli_amp)
 
             if current_flowing and pre_anod_ending_index == 0:
                 pre_anod_ending_index = i
@@ -163,7 +165,6 @@ def fitting_process():
                 # real life
                 digital_output_task.write(True)
 
-
     if desired_thickness - current_thickness[0] <= 1:
         gui.window['PAUSE'].update(disabled=True)
         gui.window['START'].update(disabled=True, text='Done', button_color='green')
@@ -173,7 +174,7 @@ def fitting_process():
 current_thickness = [90, 1]
 real_data_history, fitted_data_history = [], []
 approx_anodizing_time = [0]
-voltage_history = []
+milli_amp_history = []
 thickness_history = []
 current_real_data, current_fitted_data = [], []
 i = 0
@@ -183,7 +184,6 @@ pre_anod_ending_index, post_anod_starting_index = 0, 0
 current_flowing = False
 ref_spectrum_name = ''
 anod_folder, plot_folder, calculated_data_folder, organized_folder = Path(), Path(), Path(), Path()
-allowed_name_ref_spektrs = ['ref_spektrs.txt', 'ref spektrs.txt', 'rf_spektrs.txt', 'r_spektrs.txt', 'r spektrs.txt']
 
 # Validation variables
 correct_thickness, correct_ref_file, arduino_connected = False, False, False
@@ -211,11 +211,11 @@ while True:
     if event == 'INC-DATA':
         correct_ref_file = False
         data_folder = Path(sg.popup_get_folder('', no_window=True))
-        files = [file.name for file in data_folder.rglob(TXT_FILES)]
+        files = [file.name for file in data_folder.rglob(TXT_EXTENSION)]
         ref_spectrum_name = ''
-        if str(files[-1]).lower() in allowed_name_ref_spektrs:
+        if str(files[-1]).lower() in ALLOWED_REF_SPEKTRS_NAME:
             ref_spectrum_name = str(files[-1])
-        elif str(files[0]).lower() in allowed_name_ref_spektrs:
+        elif str(files[0]).lower() in ALLOWED_REF_SPEKTRS_NAME:
             ref_spectrum_name = str(files[0])
 
         if ref_spectrum_name and data_folder.name and (data_folder / ref_spectrum_name).is_file():
@@ -230,8 +230,10 @@ while True:
             gui.disable_buttons()
             fitting = True
             threading.Thread(target=fitting_process, daemon=True).start()
+
         else:
             sg.popup_error('Check your inputs', title='Input error')
+            gui.window['START-ELECTRICITY'].update(disabled=True)
     # else:
     #     sg.popup_error('National instruments not connected', title='Input error')
 
@@ -253,16 +255,15 @@ while True:
         break
 
     if event == 'START-ELECTRICITY':
-        print(current_flowing)
+        # print(current_flowing)
         current_flowing = True
         digital_output_task.write(False)
+        gui.window['START-ELECTRICITY'].update(disabled=True)
 
     if event == 'STOP-ELECTRICITY':
-        print(current_flowing)
+        # print(current_flowing)
         current_flowing = False
         digital_output_task.write(True)
-
-
 
 if saving:
     gui.exit()
@@ -272,9 +273,9 @@ if saving:
     real_data_history_anod = real_data_history[pre_anod_ending_index:post_anod_starting_index]
     fitted_data_history_anod = fitted_data_history[pre_anod_ending_index:post_anod_starting_index]
     thickness_history_anod = thickness_history[pre_anod_ending_index:post_anod_starting_index]
-    voltage_history_anod = voltage_history[pre_anod_ending_index:post_anod_starting_index]
+    milli_amp_history_anod = milli_amp_history[pre_anod_ending_index:post_anod_starting_index]
 
-    spectrum_files = [file.name for file in anod_folder.rglob(TXT_FILES) if file.name != 'ref_spektrs.txt']
+    spectrum_files = [file.name for file in anod_folder.rglob(TXT_EXTENSION) if file.name != 'ref_spektrs.txt']
 
     for i, file in enumerate(spectrum_files):
         clear_fitting_figure(str(file), thickness_history_anod[i], anodizing_time[i])
@@ -286,16 +287,10 @@ if saving:
 
     thickness_history_anod = np.array(thickness_history_anod)[:, 0]
 
-    # for i, (real, fitted, thick) in enumerate(zip(real_data_history_anod, fitted_data_history_anod,
-    # thickness_history_anod)):
-    #     spectra_filename = get_spectra_filenames(i)[0]
-    #     clear_fitting_figure(spectra_filename, thick, anodizing_time[i])
-    #     save_fitting_figure(LAMBDA_RANGE, real, fitted, plot_folder, spectra_filename[:-4])
-    #     save_fitting_dat(LAMBDA_RANGE, real, fitted, calculated_data_folder, spectra_filename[:-4])
-    #     progress_bar.update()
-
-    save_anodizing_time_figure(voltage_history_anod, thickness_history_anod, anodizing_time,
+    save_anodizing_time_figure(milli_amp_history_anod, thickness_history_anod, anodizing_time,
                                organized_folder)
-    save_anodizing_time_dat(voltage_history_anod, thickness_history_anod, anodizing_time, organized_folder)
+    save_anodizing_time_and_current_plots(milli_amp_history_anod, thickness_history_anod, anodizing_time,
+                                          organized_folder)
+    save_anodizing_time_dat(milli_amp_history_anod, thickness_history_anod, anodizing_time, organized_folder)
 
     input('Finished!\nPress enter to exit\n')

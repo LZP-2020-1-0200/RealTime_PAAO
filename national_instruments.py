@@ -35,7 +35,7 @@ if name:
     # create_voltage_task.write(0, auto_start=True)
 
     read_voltage_task = nidaqmx.Task()
-    read_voltage_task.ai_channels.add_ai_voltage_chan(f"{name}/ai0",min_val=0,max_val=1)
+    read_voltage_task.ai_channels.add_ai_voltage_chan(f"{name}/ai0", min_val=-2/1000, max_val=4/1000)
     read_voltage_task.ai_channels.add_ai_current_chan()
 
     digital_output_task = nidaqmx.Task()
@@ -47,7 +47,7 @@ if name:
     # real life
     digital_output_task.write(True)
 
-    #list_of_tasks = [create_voltage_task, read_voltage_task, digital_output_task]
+    # list_of_tasks = [create_voltage_task, read_voltage_task, digital_output_task]
     list_of_tasks = [read_voltage_task, digital_output_task]
 
 else:

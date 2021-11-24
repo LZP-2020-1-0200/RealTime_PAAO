@@ -34,7 +34,7 @@ def upgraded_get_spectra_filenames(number_of_zeros, letter_before_numbers):
         a += "0"
         list_of_strings.append(a)
 
-    list_of_ready_strings = [letter_before_numbers + k for k in list_of_strings]
+    list_of_ready_strings = [letter_before_numbers + x for x in list_of_strings]
 
     for k, v in zip(list_of_keys, reversed(list_of_ready_strings)):
         dict_of_names[k] = v
@@ -84,23 +84,40 @@ def save_fitting_dat(x, y_real, y_fitted, path, filename):
 def save_anodizing_time_figure(voltage, thickness_hist, time, path):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(time, thickness_hist)
-    ax2.plot(time, voltage, color='orange')
-
+    ax1.plot(time, thickness_hist, label='Thickness per time')
+    ax2.plot(time, voltage, color='orange', label='Current per time')
     ax1.set_xlabel("Time $(s)$")
     ax1.set_ylabel("Thickness $(nm)$")
-    ax2.set_ylabel('Voltage $(V)$')
-    ax2.set_ylim(-10, 50)
-
+    ax2.set_ylabel('Current $(mA)$')
+    ax2.set_ylim(-2, 10)
+    ax1.legend()
+    ax2.legend()
     ax1.grid()
     ax1.set_title("PAAO thickness dependence on anodization time")
-    fig.savefig(path / 'Thickness_per_time.png')
+    fig.savefig(path / 'Thickness_per_time_with_current.png')
 
 
-def save_anodizing_time_dat(voltage, thickness_hist, time, path):
+def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
+    plt.plot(time,thickness_hist)
+    plt.grid()
+    plt.xlabel("Time $(s)$")
+    plt.ylabel("Thickness $(nm)$")
+    plt.title("PAAO thickness dependence on anodization time")
+    plt.savefig(path / 'Thickness_per_time.png')
+    plt.clf()
+    plt.plot(time,voltage)
+    plt.grid()
+    plt.xlabel("Time $(s)$")
+    plt.ylabel('Current $(mA)$')
+    plt.ylim(-2,6)
+    plt.title("Current dependence on anodization time")
+    plt.savefig(path / 'Current_per_time.png')
+
+
+def save_anodizing_time_dat(current, thickness_hist, time, path):
     thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
                                    'Thickness (nm)': thickness_hist,
-                                   'Voltage (V)'   : voltage})
+                                   'Current (mA)'   : current})
     thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
 
 

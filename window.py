@@ -67,11 +67,14 @@ class GraphicalInterface:
              sg.Button('Choose folder', key='INC-DATA', font=text_font, s=12),
              sg.Image(bad_image, key='INC-DATA-IMG')],
 
-            [sg.Button('Start electricity',key='START-ELECTRICITY'),sg.Button('Stop electricity',key='STOP-ELECTRICITY')],
+
+             # sg.Button('Stop electricity', key='STOP-ELECTRICITY',s=(17, 1), font=button_font)],
 
             # Start button
-            [sg.Button('Start', key='START', font=button_font, disabled_button_color='white', s=(36, 1))],
+            [sg.Button('Start file reading', key='START', font=button_font, disabled_button_color='white', s=(36, 1))],
 
+
+            [sg.Button('Start electricity', key='START-ELECTRICITY', s=(36, 1), font=button_font)],
             # Stop button
             [sg.Button('Stop', key='PAUSE', font=button_font, disabled=True, s=(36, 1))],
 
@@ -103,7 +106,7 @@ class GraphicalInterface:
 
         self.ax.set_xlabel('Time (s)')
         self.ax.set_ylabel('Thickness (nm)')
-        self.ax3.set_ylabel('Current (A)')
+        self.ax3.set_ylabel('Current (mA)')
 
         self.ax2.set_xlabel('Wavelength (nm)')
         self.ax2.set_ylabel('Reflection (a.u.)')
