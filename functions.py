@@ -98,18 +98,20 @@ def save_anodizing_time_figure(voltage, thickness_hist, time, path):
 
 
 def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
-    plt.plot(time,thickness_hist)
+    plt.clf()
+    plt.plot(time, thickness_hist)
     plt.grid()
     plt.xlabel("Time $(s)$")
     plt.ylabel("Thickness $(nm)$")
     plt.title("PAAO thickness dependence on anodization time")
     plt.savefig(path / 'Thickness_per_time.png')
+
     plt.clf()
-    plt.plot(time,voltage)
+    plt.plot(time, voltage)
     plt.grid()
     plt.xlabel("Time $(s)$")
     plt.ylabel('Current $(mA)$')
-    plt.ylim(-2,6)
+    plt.ylim(-2, 6)
     plt.title("Current dependence on anodization time")
     plt.savefig(path / 'Current_per_time.png')
 
@@ -117,7 +119,7 @@ def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
 def save_anodizing_time_dat(current, thickness_hist, time, path):
     thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
                                    'Thickness (nm)': thickness_hist,
-                                   'Current (mA)'   : current})
+                                   'Current (mA)'  : current})
     thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
 
 

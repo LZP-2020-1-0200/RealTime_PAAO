@@ -60,7 +60,7 @@ def plotting_process():
             clear_axis(gui.ax, 0, 400, 0, desired_thickness + 20)
             clear_axis(gui.ax2, LAMBDA_RANGE[0], LAMBDA_RANGE[-1], 0.75, 0.95)
             gui.ax3.cla()
-            gui.ax3.set_ylim(-1, 1)
+            gui.ax3.set_ylim(-2, 12)
 
             thickness_history_plot_title = 'Thickness:{:.3f}$nm$  Time:{:.3f}$s$  Current:{:.3f}$mA$'.format(
                 current_thickness[0], approx_anodizing_time[i], milli_amp_history[i])
@@ -68,7 +68,7 @@ def plotting_process():
             gui.ax2.set_title(current_file.name)
 
             set_plot_labels(gui.ax, 'Time (s)', 'Thickness (nm)')
-            gui.ax3.set_ylabel('Current (A)')
+            gui.ax3.set_ylabel('Current (mA)')
             set_plot_labels(gui.ax2, 'Wavelength (nm)', 'Reflection (a.u.)')
 
             # set_plot_labels(gui.ax3, 'Voltage (V)', 'Reflection (a.u.)')
