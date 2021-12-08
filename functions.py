@@ -1,3 +1,4 @@
+import csv
 import shutil
 
 import numpy as np
@@ -154,3 +155,10 @@ def copy_files(files, to_folder):
 def move_file(old, new):
     for file in old:
         file.rename(new / file.name)
+
+
+def emergency_save(file, data):
+    with open(file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        for dat in data:
+            writer.writerow([dat])

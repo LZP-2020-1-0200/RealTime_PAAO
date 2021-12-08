@@ -7,7 +7,8 @@ import PySimpleGUI as sg
 from enlighten import Counter
 from scipy.optimize import curve_fit
 
-from functions import clear_fitting_figure, copy_files, get_anodizing_time, get_real_data, get_reference_spectrum, \
+from functions import clear_fitting_figure, copy_files, emergency_save, get_anodizing_time, get_real_data, \
+    get_reference_spectrum, \
     get_spectra_filenames2, make_folder, move_file, save_anodizing_time_and_current_plots, save_anodizing_time_dat, \
     save_anodizing_time_figure, save_fitting_dat, save_fitting_figure, upgraded_get_spectra_filenames
 from multilayer import LAMBDA_RANGE, multilayer, R0
@@ -17,6 +18,9 @@ from window import clear_axis, GraphicalInterface, set_plot_labels, validation_c
 TXT_EXTENSION = '*.txt'
 NI_VOLTAGE_TO_MA_COEFFICIENT = 0.986203059047487
 ALLOWED_REF_SPEKTRS_NAME = ['ref_spektrs.txt', 'ref spektrs.txt', 'rf_spektrs.txt', 'r_spektrs.txt', 'r spektrs.txt']
+PATH_TO_DESKTOP = 'C:/users/optika/Desktop/'
+EMERG_THICKNESS = PATH_TO_DESKTOP / 'thickness.txt'
+EMERG_CURRENT = PATH_TO_DESKTOP / 'current.txt'
 
 
 def make_folders_and_move_files(pre_end_index, post_start_index):
@@ -247,6 +251,9 @@ while True:
         except:
             pass
 
+        emergency_save(EMERG_THICKNESS, thickness_history)
+        emergency_save(EMERG_CURRENT, milli_amp_history)
+
         threading.Thread(target=make_folders_and_move_files, daemon=True,
                          args=(pre_anod_ending_index, post_anod_starting_index)).start()
 
@@ -293,4 +300,9 @@ if saving:
                                           organized_folder)
     save_anodizing_time_dat(milli_amp_history_anod, thickness_history_anod, anodizing_time, organized_folder)
 
+    try:
+        EMERG_THICKNESS.unlink()
+        EMERG_CURRENT.unlink()
+    except:
+        pass
     input('Finished!\nPress enter to exit\n')
