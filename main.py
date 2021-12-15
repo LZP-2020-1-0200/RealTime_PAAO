@@ -18,7 +18,7 @@ from window import clear_axis, GraphicalInterface, set_plot_labels, validation_c
 TXT_EXTENSION = '*.txt'
 NI_VOLTAGE_TO_MA_COEFFICIENT = 0.986203059047487
 ALLOWED_REF_SPEKTRS_NAME = ['ref_spektrs.txt', 'ref spektrs.txt', 'rf_spektrs.txt', 'r_spektrs.txt', 'r spektrs.txt']
-PATH_TO_DESKTOP = 'C:/users/optika/Desktop/'
+PATH_TO_DESKTOP = Path('C:/users/optika/Desktop/')
 EMERG_THICKNESS = PATH_TO_DESKTOP / 'thickness.txt'
 EMERG_CURRENT = PATH_TO_DESKTOP / 'current.txt'
 
@@ -161,6 +161,7 @@ def fitting_process():
 
             if desired_thickness <= current_thickness[0] and current_flowing:
                 post_anod_starting_index = i
+
 
                 current_flowing = False
                 # testing purposes
