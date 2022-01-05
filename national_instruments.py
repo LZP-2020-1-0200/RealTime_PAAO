@@ -69,8 +69,6 @@ if name:
     # create_voltage_task.ao_channels.add_ao_voltage_chan(f"{name}/ao0", min_val=0, max_val=1)
     # create_voltage_task.write(0, auto_start=True)
 
-    read_voltage_task = nidaqmx.Task()
-    read_voltage_task.ai_channels.add_ai_voltage_chan(f"{name}/ai0", min_val=-0.01, max_val=0.01)
 
     digital_output_task = nidaqmx.Task()
     digital_output_task.do_channels.add_do_chan(f"{name}/port1/line4")
@@ -82,7 +80,7 @@ if name:
     digital_output_task.write(True)
 
     # list_of_tasks = [create_voltage_task, read_voltage_task, digital_output_task]
-    list_of_tasks = [read_voltage_task, digital_output_task]
+    list_of_tasks = [digital_output_task]
 
 else:
     sys.exit('No National instruments device connected! Try connecting it first and then launch program again')

@@ -82,25 +82,24 @@ def save_fitting_dat(x, y_real, y_fitted, path, filename):
     for_saving.to_csv(path / (filename + '.dat'), sep='\t', index=False)
 
 
-def save_anodizing_time_figure(voltage, thickness_hist, time, path):
+def save_anodizing_time_figure(current_hist, current_time, thickness_hist, thickness_time, path):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(time, thickness_hist, label='Thickness per time')
-    ax2.plot(time, voltage, color='orange', label='Current per time')
+    ax1.plot(thickness_time, thickness_hist, label='Thickness per time')
+    ax2.plot(current_time, current_hist, color='orange', label='Current per time')
     ax1.set_xlabel("Time $(s)$")
     ax1.set_ylabel("Thickness $(nm)$")
     ax2.set_ylabel('Current $(mA)$')
     ax2.set_ylim(-2, 10)
-    ax1.legend()
-    ax2.legend()
+    fig.legend()
     ax1.grid()
     ax1.set_title("PAAO thickness dependence on anodization time")
     fig.savefig(path / 'Thickness_per_time_with_current.png')
 
 
-def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
+def save_anodizing_time_and_current_plots(current_hist, current_time, thickness_hist, thickness_time, path):
     plt.clf()
-    plt.plot(time, thickness_hist)
+    plt.plot(thickness_time, thickness_hist)
     plt.grid()
     plt.xlabel("Time $(s)$")
     plt.ylabel("Thickness $(nm)$")
@@ -108,7 +107,7 @@ def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
     plt.savefig(path / 'Thickness_per_time.png')
 
     plt.clf()
-    plt.plot(time, voltage)
+    plt.plot(current_time, current_hist)
     plt.grid()
     plt.xlabel("Time $(s)$")
     plt.ylabel('Current $(mA)$')
@@ -119,9 +118,11 @@ def save_anodizing_time_and_current_plots(voltage, thickness_hist, time, path):
 
 def save_anodizing_time_dat(current, thickness_hist, time, path):
     thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
-                                   'Thickness (nm)': thickness_hist,
-                                   'Current (mA)'  : current})
+                                   'Thickness (nm)': thickness_hist})
     thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
+    curr_per_time = pd.DataFrame({'Anod Time (s)': current.keys(),
+                                  'Current (nm)' : current.values()})
+    curr_per_time.to_csv(path / 'Current_per_time.dat', sep='\t', index=False)
 
 
 def get_real_data(current_file, reference_spectrum, lambda_range, R0):
