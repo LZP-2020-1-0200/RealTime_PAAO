@@ -34,11 +34,11 @@ def save_anodizing_time_figure(current_hist, current_time, thickness_hist, thick
     fig.legend()
     ax1.grid()
     ax1.set_title("PAAO thickness dependence on anodization time")
-    fig.savefig(path / 'Thickness_per_time_with_current.png')
+    fig.savefig(path / 'Thickness_per_time.png')
 
 def save_anodizing_time_dat(current, thickness_hist, time, path):
-    thick_per_time = pd.DataFrame({'Time (s)'      : time[:len(thickness_hist)],
-                                   'Thickness (nm)': thickness_hist})
+    thick_per_time = pd.DataFrame({'Time(s)'      : time[:len(thickness_hist)],
+                                   'Thickness(nm)': thickness_hist})
     thick_per_time.to_csv(path / 'Thickness_per_time.dat', sep='\t', index=False)
 
 
@@ -110,8 +110,7 @@ def fitting_thread():
 
         if (gui.ax.get_ylim()[1]) - current_thickness[0] < 20:
             gui.ax.set_ylim(gui.ax.get_ylim()[0], gui.ax.get_ylim()[1] + 30)
-        # print(anodizing_time)
-        # print((anodizing_time[:i+1]),(np.array(thickness_history)[:, 0]))
+
 
         gui.fig_agg.draw()
         gui.fig_agg2.draw()
@@ -159,7 +158,6 @@ if __name__ == '__main__':
 
     thickness_per_time_line, = gui.ax.plot([0], [0], color='tab:blue', label='Thickness')
     gui.ax.set_ylim(0, 300)
-    # current_per_time_line = gui.ax3.plot([0], [0], color='orange', label='Current',alpha=0.7)[0]
     fitted_spectra_line = gui.ax2.plot([0], [0], color='orange', label='Fitted', linewidth=2)[0]
     real_spectra_line = gui.ax2.plot([0], [0], color='tab:blue', label='Real', alpha=0.8)[0]
     theoretical = gui.ax.plot(np.arange(0, 500), np.arange(0, 500) * 0.8108188540050140 + 70.3530639434863000,
@@ -170,22 +168,11 @@ if __name__ == '__main__':
     gui.fig.legend(loc="upper left", bbox_to_anchor=(0, 1), bbox_transform=gui.ax.transAxes)
     gui.ax2.legend()
 
-    update_counter = 0
     while True:
         event, values = window.read()
 
         if event == sg.WIN_CLOSED:
             break
-
-        # if event == 'DESIRED-THICK':
-        #     try:
-        #         desired_thickness = float(values['DESIRED-THICK'])
-        #         if desired_thickness < 100:
-        #             raise ValueError('Thickness must be at least 100nm!')
-        #         correct_thickness = True
-        #     except ValueError as error:
-        #         correct_thickness = False
-        #     validation_check(window['DESIRED-THICK-IMG'], correct_thickness)
 
         if event == 'INC-DATA':
             correct_ref_file = False
