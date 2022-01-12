@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
-
+from pathlib import Path
 
 def interpolate(x_data, y_data, new_x_data):
     return interp1d(x_data, y_data, kind='cubic')(new_x_data)
@@ -39,11 +39,10 @@ def upgraded_get_spectra_filenames(number_of_zeros, letter_before_numbers):
 
     for k, v in zip(list_of_keys, reversed(list_of_ready_strings)):
         dict_of_names[k] = v
-    # print(dict)
     return dict_of_names
 
 
-def get_anodizing_time(folder):
+def get_anodizing_time(folder: Path) -> np.ndarray:
     time_history = []
     files = [file for file in folder.rglob('*.txt') if file.name != 'ref_spektrs.txt']
     for file in files:
@@ -135,7 +134,7 @@ def get_real_data(current_file, reference_spectrum, lambda_range, R0):
     return (intensity_spectrum / reference_spectrum) * R0
 
 
-def get_reference_spectrum(path, lambda_range):
+def get_reference_spectrum(path, lambda_range) -> np.ndarray:
     reference_spectrum_from_file = np.genfromtxt(path, delimiter='\t', skip_header=17,
                                                  skip_footer=1, encoding='utf-8')
     reference_spectrum_data = split_to_arrays(reference_spectrum_from_file)

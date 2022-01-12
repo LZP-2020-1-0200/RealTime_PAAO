@@ -21,7 +21,7 @@ from national_instruments import close_all_tasks, digital_output_task, reset_tas
 from window import enable_or_disable_power_button, GraphicalInterface, update_info_element, validation_check
 
 
-def get_milli_volts(log_file, power_off, display_value, time_and_measurment_dict,window_open):
+def get_milli_volts(log_file, power_off, display_value, time_and_measurment_dict, window_open):
     reader_counter = 0
     # read_voltage_task = nidaqmx.Task()
     # read_voltage_task.ai_channels.add_ai_voltage_chan("Dev1/ai0", min_val=-0.01, max_val=0.01)
@@ -31,7 +31,9 @@ def get_milli_volts(log_file, power_off, display_value, time_and_measurment_dict
             if power_off.value:
                 try:
 
-                    milli_voltage = (read_voltage_task.read() * 1000) / NI_VOLTAGE_TO_MA_COEFFICIENT # volts to milli-amps
+                    milli_voltage = (
+                                            read_voltage_task.read() * 1000) / NI_VOLTAGE_TO_MA_COEFFICIENT  #
+                    # volts to milli-amps
                     # print(power_off.value, milli_voltage)
                     # milli_voltage = random.random()
                     display_value.value = round(milli_voltage, 3)
@@ -40,7 +42,9 @@ def get_milli_volts(log_file, power_off, display_value, time_and_measurment_dict
                         f.write(f'\nFailed to read voltage at: {datetime.now().strftime("%H:%M:%S.%f")[:-3]}')
             else:
                 try:
-                    milli_voltage = (read_voltage_task.read() * 1000) / NI_VOLTAGE_TO_MA_COEFFICIENT  # volts to milli-amps
+                    milli_voltage = (
+                                            read_voltage_task.read() * 1000) / NI_VOLTAGE_TO_MA_COEFFICIENT  #
+                    # volts to milli-amps
                     # milli_voltage = random.random()
                     display_value.value = round(milli_voltage, 3)
                     if reader_counter == 0:
@@ -89,10 +93,10 @@ def make_folders_and_move_files(pre_end_index, post_start_index):
 
 
 def fitting_thread():
-    global current_thickness, i, current_real_data, current_file, thickness_history, fitted_data_history, \
+    global current_fitted_data, i, current_real_data, current_file, thickness_history, fitted_data_history, \
         current_fitted_data, approx_anodizing_time, real_data_history, milli_amp_history, pre_anod_ending_index, \
         post_anod_starting_index, current_flowing, ref_spectrum_name, thickness_per_time_line, LOG_FILE, \
-        start_plotting, start_ploting_time
+        start_plotting, start_ploting_time, current_thickness, fitted_parameters
 
     getting_file = True
     window['START'].update(text='Waiting for the files...')
@@ -101,7 +105,7 @@ def fitting_thread():
     while fitting:
         # todo change to real milli_amp
         # milli_amp_history.append(random.random() / 5)
-        update_info_element(window, INFO_THICKNESS, round(current_thickness[0], 2), 'nm')
+        update_info_element(window, INFO_THICKNESS, round(current_thickness, 2), 'nm')
         if start_time != 0 and not power_off.value:
             update_info_element(window, INFO_ANOD_TIME, round(time.time() - start_time, 3), 's')
         # update_info_element(window, INFO_CURRENT, round(milli_amp_history[-1], 2), 'mA')
@@ -120,13 +124,6 @@ def fitting_thread():
         filenames = get_spectra_filenames2(dict_of_filenames, i)
         current_file, next_file = data_folder / filenames[0], data_folder / filenames[1]
         if next_file.is_file():
-
-            # todo uncomment
-            # milli_voltage = get_milli_volts(read_voltage_task)
-            # if milli_voltage:
-            #     current_milli_volt = milli_voltage
-            # current_milli_amp = current_milli_volt / NI_VOLTAGE_TO_MA_COEFFICIENT
-            # milli_amp_history.append(current_milli_amp)
 
             if current_flowing and pre_anod_ending_index == 0:
                 pre_anod_ending_index = i
@@ -150,36 +147,21 @@ def fitting_thread():
             real_data_history.append(current_real_data)
 
             if start_ploting_time != 0:
-                thickness_history.append(current_thickness)
                 aaa = (time.time() - start_ploting_time)
+                theoretical_thickness = aaa * 0.8108188540050140 + 70.3530639434863000
+                fitted_parameters, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data,
+                                                          p0=(theoretical_thickness, fitted_parameters[1]))
+                thickness_history.append(fitted_parameters[0])
                 times.append(aaa)
-                theoretical = aaa * 0.8108188540050140 + 70.3530639434863000
-                current_thickness, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data,  p0=(theoretical,current_thickness[1]))
             else:
-                current_thickness, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data, p0=current_thickness)
+                fitted_parameters, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data,
+                                                          p0=fitted_parameters)
 
-                # print(theoretical)
+            current_thickness = fitted_parameters[0]
+            standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 3)
+            update_info_element(window, INFO_ERROR, standard_error)
 
-
-
-            # if len(times) != 0:
-            #     theoretical = times[-1] * 0.8108188540050140 + 70.3530639434863000
-            #     print(theoretical)
-            #     current_thickness, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data, p0=current_thickness)
-            # else:
-            #     current_thickness, var_matrix = curve_fit(multilayer, LAMBDA_RANGE, current_real_data, p0=(theoretical,
-            #                                                                                                current_thickness[
-            #                                                                                                    1]))
-            SE = round(np.sqrt(np.diagonal(var_matrix))[0], 3)
-            update_info_element(window, INFO_ERROR, SE)
-            # print(current_real_data)
-
-            current_thickness[0] = current_thickness[0] if current_thickness[0] > 90 else 90
-
-
-
-            current_fitted_data = multilayer(LAMBDA_RANGE, *current_thickness)
-
+            current_fitted_data = multilayer(LAMBDA_RANGE, current_thickness, fitted_parameters[1])
             fitted_data_history.append(current_fitted_data)
 
             if start_plotting:
@@ -219,14 +201,8 @@ def fitting_thread():
                 enable_or_disable_power_button(window)
             i += 1
 
-    # if desired_thickness - current_thickness[0] <= 1:
-    #     window['PAUSE'].update(disabled=True)
-    #     window['START'].update(disabled=True, text='Done', button_color='green')
-
-    # Global variables
-
-
-current_thickness = [90, 1]
+fitted_parameters = [90, 1]
+current_thickness = 0
 real_data_history, fitted_data_history = [], []
 approx_anodizing_time = [0]
 milli_amp_history = []
@@ -267,7 +243,7 @@ if __name__ == '__main__':
     window = gui.window
 
     thickness_per_time_line, = gui.ax.plot([0], [0], color='tab:blue', label='Thickness')
-    current_per_time_line = gui.ax3.plot([0], [0], color='orange', label='Current',alpha=0.7)[0]
+    current_per_time_line = gui.ax3.plot([0], [0], color='orange', label='Current', alpha=0.7)[0]
     fitted_spectra_line = gui.ax2.plot([0], [0], color='orange', label='Fitted', linewidth=2)[0]
     real_spectra_line = gui.ax2.plot([0], [0], color='tab:blue', label='Real', alpha=0.8)[0]
     theoretical = gui.ax.plot(np.arange(0, 500), np.arange(0, 500) * 0.8108188540050140 + 70.3530639434863000,
@@ -396,8 +372,6 @@ if __name__ == '__main__':
         fitted_data_history_anod = fitted_data_history[pre_anod_ending_index:post_anod_starting_index]
         thickness_history_anod = thickness_history[pre_anod_ending_index:post_anod_starting_index]
 
-
-
         # milli_amp_history_anod = milli_amp_history[pre_anod_ending_index:post_anod_starting_index]
 
         spectrum_files = [file.name for file in anod_folder.rglob(TXT_EXTENSION) if file.name != 'ref_spektrs.txt']
@@ -412,9 +386,10 @@ if __name__ == '__main__':
 
         thickness_history_anod = np.array(thickness_history_anod)[:, 0]
 
-        save_anodizing_time_figure(time_and_measurement_dict.values(),time_and_measurement_dict.keys(),
+        save_anodizing_time_figure(time_and_measurement_dict.values(), time_and_measurement_dict.keys(),
                                    thickness_history_anod, anodizing_time, organized_folder)
-        save_anodizing_time_and_current_plots(time_and_measurement_dict.values(),time_and_measurement_dict.keys(), thickness_history_anod, anodizing_time,
+        save_anodizing_time_and_current_plots(time_and_measurement_dict.values(), time_and_measurement_dict.keys(),
+                                              thickness_history_anod, anodizing_time,
                                               organized_folder)
         save_anodizing_time_dat(time_and_measurement_dict, thickness_history_anod, anodizing_time, organized_folder)
 
