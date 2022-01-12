@@ -1,6 +1,13 @@
 import PySimpleGUI as sg
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+
+TEXT_FONT = ('Verdana', 12)
+BUTTON_FONT = ('Verdana', 14)
+BAD_IMAGE = "assets\\bad.png"
+GOOD_IMAGE = "assets\\good.png"
+ICON = 'assets\\icon2.ico'
 
 
 def draw_figure(canvas, figure):
@@ -23,8 +30,22 @@ def set_plot_labels(ax, x_label, y_label):
 
 
 def validation_check(window_with_key, state):
-    image = "assets\\good.png" if state else "assets\\bad.png"
+    image = GOOD_IMAGE if state else BAD_IMAGE
     window_with_key.update(source=image)
+
+
+def update_info_element(window,element, new_value, units=''):
+    window[element].update(str(new_value) + ' ' + units)
+
+def enable_or_disable_power_button(window):
+
+    if window['START-ELECTRICITY'].Widget['state'] == 'disabled':
+        window['STOP-ELECTRICITY'].update(disabled=True)
+        window['START-ELECTRICITY'].update(disabled=False)
+    else:
+        window['START-ELECTRICITY'].update(disabled=True)
+        window['STOP-ELECTRICITY'].update(disabled=False)
+
 
 
 class GraphicalInterface:
@@ -33,12 +54,33 @@ class GraphicalInterface:
         self.window = None
         self.fig_agg, self.fig_agg2 = None, None
         self.ax, self.ax2, self.ax3 = None, None, None
+        self.fig, self.fig2 = None, None
         self.create_window()
+        self.set_labels_lim_etc()
+
+    def set_labels_lim_etc(self):
+        self.ax.set_xlim(0, 300)
+        self.ax.set_ylim(80, 300)
+        self.ax.set_title('PAAO thickness and current dependence on anodization time', pad=15)
+        self.ax.grid(True)
+        self.ax.set_xlabel('Time (s)')
+        self.ax.set_ylabel('Thickness (nm)')
+
+        self.ax2.set_xlim(480, 800)
+        self.ax2.set_ylim(0.70, 0.9)
+        self.ax2.set_yticks(np.arange(0.7, 0.9, 0.05))
+        self.ax2.set_xticks(np.arange(480, 801, 40))
+        self.ax2.set_xlabel('Wavelength (nm)')
+        self.ax2.set_ylabel('Reflection (a.u.)')
+        self.ax2.set_title('Real and fitted spectrum', pad=15)
+        self.ax2.grid(True)
+        self.ax2.yaxis.tick_right()
+        self.ax2.yaxis.set_label_position("right")
+
+        self.ax3.set_ylim(-2, 10)
+        self.ax3.set_ylabel('Current (mA)')
 
     def create_window(self):
-        text_font = ('Verdana', 12)
-        button_font = ('Verdana', 14)
-        bad_image = "assets\\bad.png"
         sg.theme('Reddit')
 
         col1 = sg.Canvas(key='-CANVAS-', expand_y=True, expand_x=True)
@@ -50,44 +92,52 @@ class GraphicalInterface:
         canvas_layout = sg.Frame(layout=[[canvas_frame1, canvas_frame2]], title='',
                                  expand_y=True, expand_x=True, border_width=2)
 
-        layout = [
-            # [sg.Text('Choose COM Port:', font=text_font, s=25),
-            #  sg.Combo([port.description for port in self.ports], font=('Verdana', 12), key='ARDUINO',
-            #           enable_events=True, s=(25, 2)),
-            #  sg.Image(bad_image, key='COM-PORT-IMG')],
+        info_layout = [
+            [sg.Text('Info Panel', font=('Roboto', 14, 'bold'), expand_x=True, justification='center', p=(0, 15))],
+            [sg.Text('Anodizing time:', font=TEXT_FONT, s=13), sg.Text('-', font=TEXT_FONT, key='ANOD-TIME')],
+            [sg.Text('Thickness:', font=TEXT_FONT, s=13), sg.Text('-', font=TEXT_FONT, key='ANOD-THICK')],
+            [sg.Text('Current:', font=TEXT_FONT, s=13), sg.Text('-', font=TEXT_FONT, key='ANOD-CURRENT')],
+            [sg.Text('Standard Error:', font=TEXT_FONT, s=13), sg.Text('-', font=TEXT_FONT, key='ANOD-ERROR')],
+            [sg.Text('File:', font=TEXT_FONT, s=13), sg.Text('-', font=TEXT_FONT, key='ANOD-FILE')]]
 
+        input_layout = [
             # Desired thickness input
-            [sg.Text('Desired Thickness (nm):', font=text_font, s=25),
-             sg.Input('', key='DESIRED-THICK', s=(12, 2), enable_events=True, justification='c', font=text_font,
+            [sg.Text('Desired Thickness (nm):', font=TEXT_FONT, s=25),
+             sg.Input('', key='DESIRED-THICK', s=(14, 2), enable_events=True, justification='c', font=TEXT_FONT,
                       pad=((5, 9), (0, 0))),
-             sg.Image(bad_image, key='DESIRED-THICK-IMG')],
+             sg.Image(BAD_IMAGE, key='DESIRED-THICK-IMG')],
 
             # Directory with data picker
-            [sg.Text('Folder with data:', font=text_font, s=25),
-             sg.Button('Choose folder', key='INC-DATA', font=text_font, s=12),
-             sg.Image(bad_image, key='INC-DATA-IMG')],
-
-
-             # sg.Button('Stop electricity', key='STOP-ELECTRICITY',s=(17, 1), font=button_font)],
+            [sg.Text('Data directory:', font=TEXT_FONT, s=25),
+             sg.Button('Choose directory', key='INC-DATA', font=TEXT_FONT, s=14),
+             sg.Image(BAD_IMAGE, key='INC-DATA-IMG')],
 
             # Start button
-            [sg.Button('Start file reading', key='START', font=button_font, disabled_button_color='white', s=(36, 1))],
+            [sg.Button('Start file reading', key='START', font=BUTTON_FONT, disabled_button_color='white', s=(36, 1))],
+
+            # Electricity start button
 
 
-            [sg.Button('Start electricity', key='START-ELECTRICITY', s=(36, 1), font=button_font)],
             # Stop button
-            [sg.Button('Stop', key='PAUSE', font=button_font, disabled=True, s=(36, 1))],
+            [sg.Button('Stop', key='PAUSE', font=BUTTON_FONT, disabled=True, s=(36, 1))],
 
-            [sg.Button('Save plots and Exit', key='SAVE-PLOTS', font=button_font,
-                       disabled=True, s=(36, 1))]]
+            # Exit and save button
+            [sg.Button('Save plots and Exit', key='SAVE-PLOTS', font=BUTTON_FONT,
+                       disabled=True, s=(36, 1))],
+            [sg.Button('Power ON', key='START-ELECTRICITY', s=(17, 1), font=BUTTON_FONT, expand_x=True,
+                       button_color='green'),
+             sg.Button('Power OFF', key='STOP-ELECTRICITY', s=(17, 1), font=BUTTON_FONT, button_color='red',
+                       disabled=True)]]
 
-        input_layout = sg.Frame(layout=layout, title='', element_justification='center', expand_x=True)
+        a = sg.Frame(layout=input_layout, title='', expand_y=True)
+        b = sg.Frame(layout=info_layout, title='', expand_y=True)
+
+        input_layout = sg.Frame(layout=[[a, b]], title='', element_justification='center', expand_x=True)
 
         final_layout = [[canvas_layout], [input_layout]]
 
         self.window = sg.Window('Realtime_PAOO', final_layout, finalize=True, resizable=True, auto_size_text=True,
-                                debugger_enabled=False, icon='assets/icon2.ico', titlebar_icon='assets/icon2.ico',
-                                element_justification='center')
+                                debugger_enabled=False, icon=ICON, titlebar_icon=ICON)
 
         # Canvas drawing
         canvas_elem = self.window['-CANVAS-']
@@ -96,34 +146,21 @@ class GraphicalInterface:
         canvas = canvas_elem.TKCanvas
         canvas2 = canvas_elem2.TKCanvas
 
-        fig, self.ax = plt.subplots(figsize=(6, 4))
-        fig2, self.ax2 = plt.subplots(figsize=(6, 4))
+        self.fig, self.ax = plt.subplots(figsize=(6, 4))
+        self.fig2, self.ax2 = plt.subplots(figsize=(6, 4))
         self.ax3 = self.ax.twinx()
 
-        self.ax.grid(True)
-        self.ax2.grid(True)
-        # self.ax3.grid(True)
-
-        self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Thickness (nm)')
-        self.ax3.set_ylabel('Current (mA)')
-
-        self.ax2.set_xlabel('Wavelength (nm)')
-        self.ax2.set_ylabel('Reflection (a.u.)')
-
-        self.fig_agg = draw_figure(canvas, fig)
-        self.fig_agg2 = draw_figure(canvas2, fig2)
-
-        # plt.tight_layout()
+        self.fig_agg = draw_figure(canvas, self.fig)
+        self.fig_agg2 = draw_figure(canvas2, self.fig2)
 
     def disable_buttons(self):
         self.window['START'].update(disabled=True)
         self.window['PAUSE'].update(disabled=False)
-
         self.window['SAVE-PLOTS'].update(disabled=True)
         self.window['DESIRED-THICK'].update(disabled=True)
         self.window['INC-DATA'].update(disabled=True)
-        # self.window['ARDUINO'].update(disabled=True)
 
     def exit(self):
         self.window.close()
+
+
