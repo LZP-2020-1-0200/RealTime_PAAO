@@ -9,8 +9,8 @@ from RealTime_PAOO.common.constants import INFO_ANOD_TIME, INFO_ERROR, INFO_FILE
     TXT_EXTENSION, ZEROS
 from RealTime_PAOO.data.helpers import construct_spectra_filenames_dict, get_anodizing_time, get_spectra_paths
 from RealTime_PAOO.data.read import get_real_data
-from RealTime_PAOO.gui.helpers import enable_or_disable_power_button, update_info_element
-from RealTime_PAOO.gui.plots import redraw_plots
+from RealTime_PAOO.gui.main_gui.helpers import enable_or_disable_power_button, update_info_element
+from RealTime_PAOO.gui.main_gui.plots import redraw_plots
 from RealTime_PAOO.multilayer.multilayer import multilayer, R0, theoretical_thickness
 
 
@@ -53,7 +53,7 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
         redraw_plots(gui.fig_agg, gui.fig_agg2)
 
 
-def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
+def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict, digital_output_task):
     window['START'].update(text='Waiting for the files...')
     dict_of_filenames = {}
     start_anod_time = 0
@@ -68,15 +68,15 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
 
         # we get the first spectrum filename and construct the dictionary with possible spectrum names
         if not dict_of_filenames:
-            files = [str(x.name) for x in paths.data_folder.rglob(TXT_EXTENSION)]
-            files.remove(shared.ref_spectrum_name.lower())
+            files = [str(x.name) for x in paths.path_to_original_folder.rglob(TXT_EXTENSION)]
+            files.remove(shared.ref_spectrum_name)
 
             if len(files) <= 0:
                 continue
 
             dict_of_filenames = construct_spectra_filenames_dict(str(files[0])[:-4])
 
-        current_file, next_file = get_spectra_paths(dict_of_filenames, i, paths.data_folder)
+        current_file, next_file = get_spectra_paths(dict_of_filenames, i, paths.path_to_original_folder)
 
         if next_file.is_file():
             update_info_element(window, INFO_FILE, current_file.name)
@@ -136,7 +136,7 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
                 shared.emergency_stop = False
                 shared.anod_ending_index = i + 1
                 power_on.value = False
-                # digital_output_task.write(True)
+                digital_output_task.write(True)
                 with open(paths.log_file, 'a') as f:
                     end_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
                     f.write(f'\nSample approximate thickness: {current_thickness}')

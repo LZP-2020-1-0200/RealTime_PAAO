@@ -28,7 +28,7 @@ def disable_buttons(window):
     window['START'].update(disabled=True)
     window['STOP'].update(disabled=False)
     window['SAVE'].update(disabled=True)
-    window['DESIRED-THICK'].update(disabled=True)
+    # window['DESIRED-THICK'].update(disabled=True)
     window['INC-DATA'].update(disabled=True)
 
 
@@ -43,6 +43,16 @@ def update_zipping(window):
     i = 0
     list_of_texts = ['Zipping files', 'Zipping files.', 'Zipping files..', 'Zipping files...']
     while shared.zipper_animation:
+        if i == 4:
+            i = 0
+        window['START'].update(text=list_of_texts[i])
+        time.sleep(0.8)
+        i += 1
+
+def update_uploading(window):
+    i = 0
+    list_of_texts = ['Uploading to Zenodo', 'Uploading to Zenodo.', 'Uploading to Zenodo..', 'Uploading to Zenodo...']
+    while shared.uploader_animation:
         if i == 4:
             i = 0
         window['START'].update(text=list_of_texts[i])
