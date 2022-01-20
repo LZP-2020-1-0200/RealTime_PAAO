@@ -30,7 +30,7 @@ def save_fitting_data(list_of_spectrum_files: list, all_real_data: list[list], a
         ax.set_title(spectr)
         plt.draw()
         fig.savefig(plot_folder / (spectr[:-4] + '.png'))
-        df.to_csv(calculated_data_folder / (spectr[:-4] + '.dat'), sep='\t', index=False)
+        df.to_csv(calculated_data_folder / (spectr[:-4] + '.dat'), sep='\t', index=False, header=False)
 
 
 def save_thickness_per_time_data(thickness_hist, thickness_time, path_to_save):
@@ -45,10 +45,10 @@ def save_thickness_per_time_data(thickness_hist, thickness_time, path_to_save):
     fig.savefig(path_to_save / 'Thickness_per_time.png')
     thick_per_time = pd.DataFrame({'Time(s)'      : thickness_time,
                                    'Thickness(nm)': thickness_hist})
-    thick_per_time.to_csv(path_to_save / 'Thickness_per_time.dat', sep='\t', index=False)
+    thick_per_time.to_csv(path_to_save / 'Thickness_per_time.dat', sep='\t', index=False, header=False)
 
 
 def save_current_per_time_data(current_dict: dict, path_to_save: Path):
     curr_per_time = pd.DataFrame({'Anod Time (s)': current_dict.keys(),
                                   'Current (nm)' : current_dict.values()})
-    curr_per_time.to_csv(path_to_save / 'Current_per_time.dat', sep='\t', index=False)
+    curr_per_time.to_csv(path_to_save / 'Current_per_time.dat', sep='\t', index=False, header=False)

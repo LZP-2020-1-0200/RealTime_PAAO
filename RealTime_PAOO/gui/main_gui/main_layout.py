@@ -3,8 +3,8 @@ from matplotlib import pyplot as plt
 
 from RealTime_PAOO.common.constants import LAMBDA, PLOT_SIZE, THEORETICAL_THICKNESS, THEORETICAL_TIME, ZEROS
 from RealTime_PAOO.common.paths import path_to_bad_image, path_to_title_icon
-from RealTime_PAOO.gui.plots import set_anodization_thickness_per_time_plot_labels, set_fitting_plot_labels
-from RealTime_PAOO.gui.helpers import draw_figure
+from RealTime_PAOO.gui.main_gui.plots import set_anodization_thickness_per_time_plot_labels, set_fitting_plot_labels
+from RealTime_PAOO.gui.main_gui.helpers import draw_figure
 from RealTime_PAOO.gui.fonts import button_font, info_layout_text_size, info_panel_title_font, text_font
 
 
@@ -59,14 +59,14 @@ class GraphicalInterface:
 
         input_layout = [
             # Desired thickness input
-            [sg.Text('Desired Thickness (nm):', font=text_font, s=25),
-             sg.Input('', key='DESIRED-THICK', s=(14, 2), enable_events=True, justification='c', font=text_font,
-                      pad=((5, 9), (0, 0))),
-             sg.Image(path_to_bad_image, key='DESIRED-THICK-IMG')],
+            # [sg.Text('Desired Thickness (nm):', font=text_font, s=25),
+            #  sg.Input('', key='DESIRED-THICK', s=(14, 2), enable_events=True, justification='c', font=text_font,
+            #           pad=((5, 9), (0, 0))),
+            #  sg.Image(path_to_bad_image, key='DESIRED-THICK-IMG')],
 
             # Directory with data picker
-            [sg.Text('Data directory:', font=text_font, s=25),
-             sg.Button('Choose directory', key='INC-DATA', font=text_font, s=14),
+            [
+             sg.Button('Check for reference spectrum', key='INC-DATA', font=button_font,expand_x=True),
              sg.Image(path_to_bad_image, key='INC-DATA-IMG')],
 
             # Start button

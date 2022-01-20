@@ -31,10 +31,9 @@ def get_milli_volts(power_on, display_value, time_and_measurment_dict, window_op
 
             display_value.value = round(milli_voltage, 3)
 
-            if reference_time == 0 and power_on.value:
-                reference_time = time.time()
-
-            if power_on:
+            if power_on.value:
+                if not reference_time:
+                    reference_time = time.time()
                 time_and_measurment_dict[time.time() - reference_time] = milli_voltage
 
 
@@ -69,14 +68,13 @@ def close_all_tasks(list_of_tasks):
 
 
 def initialize_national_instruments():
-    digital_output_task, list_of_tasks = None, None
-    # name = get_ni_device_name()
-    # if name:
-    #     digital_output_task = nidaqmx.Task()
-    #     digital_output_task.do_channels.add_do_chan(f"{name}/port1/line4")
-    #     digital_output_task.write(True)
-    #     list_of_tasks = [digital_output_task]
-    # else:
-    #     sg.popup_error('Error', 'No National instruments device found', 'Closing application...')
-    #     sys.exit(1)
+    name = get_ni_device_name()
+    if name:
+        digital_output_task = nidaqmx.Task()
+        digital_output_task.do_channels.add_do_chan(f"{name}/port1/line4")
+        digital_output_task.write(True)
+        list_of_tasks = [digital_output_task]
+    else:
+        sg.popup_error('Error', 'No National instruments device found', 'Closing application...')
+        sys.exit(1)
     return digital_output_task, list_of_tasks

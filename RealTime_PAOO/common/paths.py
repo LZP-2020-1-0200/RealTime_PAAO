@@ -25,4 +25,15 @@ fitted_data_folder_name = Path(organized_folder / '5. Anodizing Data')
 data_folder = Path()
 ref_spectrum_path = Path()
 emerg_current = path_to_desktop / 'current.txt'
-log_file = path_to_desktop /  'log.txt'
+log_file = path_to_desktop / 'log.txt'
+
+path_to_data_folder = ''
+path_to_original_folder = ''
+path_to_organized_folder = ''
+path_to_pre_anod_folder = ''
+path_to_anod_folder = ''
+path_to_post_anod_folder = ''
+path_to_fitted_plot_folder = ''
+path_to_fitted_data_folder = ''
+
+anodization_parameters = ''
