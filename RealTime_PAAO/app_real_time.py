@@ -1,17 +1,19 @@
+import sys
+sys.path.append('C:\\Users\\optika\\PycharmProjects\\RealTime_PAAO\\')
 from multiprocessing import freeze_support, Manager, Process, Value
 
 import PySimpleGUI as sg
 
-import RealTime_PAOO.common.shared as shared
-from RealTime_PAOO.common.constants import INFO_CURRENT
-from RealTime_PAOO.data.national_instruments import get_milli_volts, \
+from RealTime_PAAO.common import shared
+from RealTime_PAAO.common.constants import INFO_CURRENT
+from RealTime_PAAO.data.national_instruments import get_milli_volts, \
     initialize_national_instruments
-from RealTime_PAOO.gui.main_gui.events import check_for_reference_spectrum, emergency_stop_event, \
+from RealTime_PAAO.gui.main_gui.events import check_for_reference_spectrum, emergency_stop_event, \
     saving_event, start_electricity_event, start_fitting_event, stop_fitting_event, window_close_event
-from RealTime_PAOO.gui.main_gui.helpers import update_info_element
-from RealTime_PAOO.gui.main_gui.main_layout import GraphicalInterface
-from RealTime_PAOO.gui.metadata_gui.events import begin_event_loop
-from RealTime_PAOO.gui.metadata_gui.metadata_layout import DescriptionGraphicalInterface
+from RealTime_PAAO.gui.main_gui.helpers import update_info_element
+from RealTime_PAAO.gui.main_gui.main_layout import GraphicalInterface
+from RealTime_PAAO.gui.metadata_gui.events import begin_event_loop
+from RealTime_PAAO.gui.metadata_gui.metadata_layout import DescriptionGraphicalInterface
 
 if __name__ == '__main__':
     freeze_support()

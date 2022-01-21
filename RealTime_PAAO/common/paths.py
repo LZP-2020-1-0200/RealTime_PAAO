@@ -8,11 +8,11 @@ def convert_string_to_path_object(path):
 
 path_to_desktop = Path(f'C:\\users\\{getuser()}\\Desktop\\')
 # Paths to assets and refractive info
-path_to_water_refractive_info = Path('RealTime_PAOO/resources/refractive_info/Water.txt')
-path_to_al_refractive_info = Path('RealTime_PAOO/resources/refractive_info/Rakic-BB.yml.txt')
-path_to_bad_image = str(Path("RealTime_PAOO/resources/gui_assets/bad.png"))
-path_to_good_image = str(Path("RealTime_PAOO/resources/gui_assets/good.png"))
-path_to_title_icon = str(Path("RealTime_PAOO/resources/gui_assets/title_icon.ico"))
+path_to_water_refractive_info = Path('RealTime_PAAO/resources/refractive_info/Water.txt')
+path_to_al_refractive_info = Path('RealTime_PAAO/resources/refractive_info/Rakic-BB.yml.txt')
+path_to_bad_image = str(Path("RealTime_PAAO/resources/gui_assets/bad.png"))
+path_to_good_image = str(Path("RealTime_PAAO/resources/gui_assets/good.png"))
+path_to_title_icon = str(Path("RealTime_PAAO/resources/gui_assets/title_icon.ico"))
 
 # Organize folder
 organized_folder = Path('Organized files')

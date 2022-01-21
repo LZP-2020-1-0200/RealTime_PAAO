@@ -3,8 +3,8 @@ import sys
 import time
 from datetime import datetime
 
-from RealTime_PAOO.common.constants import NI_VOLTAGE_TO_MA_COEFFICIENT
-from RealTime_PAOO.common.paths import log_file
+from RealTime_PAAO.common.constants import NI_VOLTAGE_TO_MA_COEFFICIENT
+from RealTime_PAAO.common.paths import log_file
 
 import nidaqmx
 import nidaqmx.system

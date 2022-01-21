@@ -4,8 +4,8 @@ import sys
 
 import PySimpleGUI as sg
 
-from RealTime_PAOO.common import paths, shared
-from RealTime_PAOO.data.directories import make_folder
+from RealTime_PAAO.common import paths, shared
+from RealTime_PAAO.data.directories import make_folder
 
 dictionary_with_units = {
     'DATE'             : '',

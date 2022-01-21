@@ -3,8 +3,8 @@ import time
 
 import requests
 
-from RealTime_PAOO.common import shared
-from RealTime_PAOO.gui.main_gui.helpers import update_uploading
+from RealTime_PAAO.common import shared
+from RealTime_PAAO.gui.main_gui.helpers import update_uploading
 
 ACCESS_TOKEN = 'FwTvXGqMz20WprHPvzOOQw6N9PMK2nrJ0gQfG3AyIMeNuPVG4WmuZydIZhSc'
 bucket_url = 'https://sandbox.zenodo.org/api/files/c5edac05-aca7-4a59-8c8b-1040fba40de5'

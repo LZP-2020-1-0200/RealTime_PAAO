@@ -1,7 +1,7 @@
 import numpy as np
 
-from RealTime_PAOO.common.constants import INTERCEPT, LAMBDA, SLOPE
-from RealTime_PAOO.multilayer.ntilde import ntilde
+from RealTime_PAAO.common.constants import INTERCEPT, LAMBDA, SLOPE
+from RealTime_PAAO.multilayer.ntilde import ntilde
 
 
 def theoretical_thickness(anod_time):

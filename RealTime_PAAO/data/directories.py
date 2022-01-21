@@ -7,9 +7,9 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-from RealTime_PAOO.common import paths, shared
-from RealTime_PAOO.common.constants import TXT_EXTENSION
-from RealTime_PAOO.gui.main_gui.helpers import update_zipping
+from RealTime_PAAO.common import paths, shared
+from RealTime_PAAO.common.constants import TXT_EXTENSION
+from RealTime_PAAO.gui.main_gui.helpers import update_zipping
 
 
 def get_data_directory():

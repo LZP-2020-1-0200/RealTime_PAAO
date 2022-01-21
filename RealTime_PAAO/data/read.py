@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from RealTime_PAOO.common.constants import LAMBDA, REAL_DATA_SKIP_HEADERS
-from RealTime_PAOO.data.helpers import interpolate, split_to_arrays
+from RealTime_PAAO.common.constants import LAMBDA, REAL_DATA_SKIP_HEADERS
+from RealTime_PAAO.data.helpers import interpolate, split_to_arrays
 
 
 # M. Daimon and A. Masumura. Measurement of the refractive index of distilled water from the near-infrared region

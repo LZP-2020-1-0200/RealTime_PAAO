@@ -2,8 +2,8 @@ import time
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from RealTime_PAOO.common import shared
-from RealTime_PAOO.common.paths import path_to_bad_image, path_to_good_image
+from RealTime_PAAO.common import shared
+from RealTime_PAAO.common.paths import path_to_bad_image, path_to_good_image
 
 
 def validation_check(window_with_key, state):

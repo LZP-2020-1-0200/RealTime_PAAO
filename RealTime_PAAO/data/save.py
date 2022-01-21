@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from RealTime_PAOO.common.constants import FITTED_X_LABEL, FITTED_Y_LABEL, LAMBDA, SPECTRUM_Y_LIM, SPECTRUM_Y_TICKS, \
+from RealTime_PAAO.common.constants import FITTED_X_LABEL, FITTED_Y_LABEL, LAMBDA, SPECTRUM_Y_LIM, SPECTRUM_Y_TICKS, \
     THICKNESS_PER_TIME_TITLE, THICKNESS_PER_TIME_X_LABEL, THICKNESS_PER_TIME_Y_LABEL
 
 

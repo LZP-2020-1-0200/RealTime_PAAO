@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from scipy.interpolate import interp1d
 
-from RealTime_PAOO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
+from RealTime_PAAO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
 
 
 def split_to_arrays(data, conversion=1):

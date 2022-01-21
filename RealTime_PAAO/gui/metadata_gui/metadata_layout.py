@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from datetime import datetime
-from RealTime_PAOO.common.paths import path_to_title_icon
-from RealTime_PAOO.gui.fonts import button_font, text_font
+from RealTime_PAAO.common.paths import path_to_title_icon
+from RealTime_PAAO.gui.fonts import button_font, text_font
 
 
 class DescriptionGraphicalInterface:

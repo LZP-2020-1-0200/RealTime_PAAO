@@ -5,17 +5,17 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 
-import RealTime_PAOO.common.shared as shared
-from RealTime_PAOO.common import paths
-from RealTime_PAOO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
-from RealTime_PAOO.data.directories import get_data_directory, make_folders_and_move, move_spectrums, zip_dir
-from RealTime_PAOO.data.helpers import get_anodizing_time
-from RealTime_PAOO.data.national_instruments import close_all_tasks, ni_stop_the_power
-from RealTime_PAOO.data.read import get_reference_spectrum
-from RealTime_PAOO.data.save import save_current_per_time_data, save_fitting_data, save_thickness_per_time_data
-from RealTime_PAOO.data.upload import upload_to_zenodo
-from RealTime_PAOO.gui.main_gui.helpers import disable_buttons, enable_or_disable_power_button, validation_check
-from RealTime_PAOO.multilayer.fitting import fitting_thread_post_factum, fitting_thread_real_time
+import RealTime_PAAO.common.shared as shared
+from RealTime_PAAO.common import paths
+from RealTime_PAAO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
+from RealTime_PAAO.data.directories import get_data_directory, make_folders_and_move, move_spectrums, zip_dir
+from RealTime_PAAO.data.helpers import get_anodizing_time
+from RealTime_PAAO.data.national_instruments import close_all_tasks, ni_stop_the_power
+from RealTime_PAAO.data.read import get_reference_spectrum
+from RealTime_PAAO.data.save import save_current_per_time_data, save_fitting_data, save_thickness_per_time_data
+from RealTime_PAAO.data.upload import upload_to_zenodo
+from RealTime_PAAO.gui.main_gui.helpers import disable_buttons, enable_or_disable_power_button, validation_check
+from RealTime_PAAO.multilayer.fitting import fitting_thread_post_factum, fitting_thread_real_time
 
 
 def desired_thickness_event(window, values):

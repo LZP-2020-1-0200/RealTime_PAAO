@@ -4,14 +4,14 @@ from datetime import datetime
 import numpy as np
 from scipy.optimize import curve_fit
 
-from RealTime_PAOO.common import paths, shared as shared
-from RealTime_PAOO.common.constants import INFO_ANOD_TIME, INFO_ERROR, INFO_FILE, INFO_THICKNESS, LAMBDA, \
+from RealTime_PAAO.common import paths, shared as shared
+from RealTime_PAAO.common.constants import INFO_ANOD_TIME, INFO_ERROR, INFO_FILE, INFO_THICKNESS, LAMBDA, \
     TXT_EXTENSION, ZEROS
-from RealTime_PAOO.data.helpers import construct_spectra_filenames_dict, get_anodizing_time, get_spectra_paths
-from RealTime_PAOO.data.read import get_real_data
-from RealTime_PAOO.gui.main_gui.helpers import enable_or_disable_power_button, update_info_element
-from RealTime_PAOO.gui.main_gui.plots import redraw_plots
-from RealTime_PAOO.multilayer.multilayer import multilayer, R0, theoretical_thickness
+from RealTime_PAAO.data.helpers import construct_spectra_filenames_dict, get_anodizing_time, get_spectra_paths
+from RealTime_PAAO.data.read import get_real_data
+from RealTime_PAAO.gui.main_gui.helpers import enable_or_disable_power_button, update_info_element
+from RealTime_PAAO.gui.main_gui.plots import redraw_plots
+from RealTime_PAAO.multilayer.multilayer import multilayer, R0, theoretical_thickness
 
 
 def fitting_thread_post_factum(reference_spectrum, gui, data_folder):

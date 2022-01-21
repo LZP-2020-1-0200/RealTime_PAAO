@@ -1,8 +1,8 @@
 import PySimpleGUI as sg
 
-import RealTime_PAOO.common.shared as shared
-from RealTime_PAOO.gui.main_gui.events import choose_data_dir_event, saving_event, start_fitting_event, stop_fitting_event
-from RealTime_PAOO.gui.main_gui.main_layout import GraphicalInterface
+import RealTime_PAAO.common.shared as shared
+from RealTime_PAAO.gui.main_gui.events import choose_data_dir_event, saving_event, start_fitting_event, stop_fitting_event
+from RealTime_PAAO.gui.main_gui.main_layout import GraphicalInterface
 
 if __name__ == '__main__':
     gui = GraphicalInterface()
