@@ -1,4 +1,4 @@
-from multiprocessing import Manager, Process, Value
+from multiprocessing import freeze_support, Manager, Process, Value
 
 import PySimpleGUI as sg
 
@@ -14,6 +14,7 @@ from RealTime_PAOO.gui.metadata_gui.events import begin_event_loop
 from RealTime_PAOO.gui.metadata_gui.metadata_layout import DescriptionGraphicalInterface
 
 if __name__ == '__main__':
+    freeze_support()
     metadata_gui = DescriptionGraphicalInterface()
     begin_event_loop(metadata_gui)
 

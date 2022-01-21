@@ -32,7 +32,7 @@ def move_file(list_of_files: list, new_dir: Path):
         file.rename(new_dir / file.name)
 
 
-def make_folders_and_move_files(anod_start_index, anod_end_index, data_folder, window):
+def move_spectrums(anod_start_index, anod_end_index, data_folder, window):
     window['STOP'].update(text="Reorganizing files, Please wait... ")
 
     # original_folder = make_folder(data_folder, 'Originals')
@@ -59,28 +59,26 @@ def make_folders_and_move_files(anod_start_index, anod_end_index, data_folder, w
     copy_files(anod_files, paths.path_to_anod_folder)
     copy_files(post_anod_files, paths.path_to_post_anod_folder)
 
-
-
-
-
     window['STOP'].update(text="Done reorganizing files", disabled=True)
     window['SAVE'].update(disabled=False)
 
-# def zip_files(source, destination,window):
-#     threading.Thread(target=update_zipping, daemon=True,
-#                      args=(window,)).start()
-#     base = os.path.basename(destination)
-#     name = base.split('.')[0]
-#     format = base.split('.')[1]
-#     archive_from = os.path.dirname(source)
-#     archive_to = os.path.basename(source.strip(os.sep))
-#     print(source, destination, archive_from, archive_to)
-#     shutil.make_archive(name, format, archive_from, archive_to)
-#     shutil.move('%s.%s' % (name, format), destination)
-#     shared.zipper_animation = False
-#     window['START'].update(text='Zipping completed')
-#     time.sleep(1.5)
-#     window['START'].update(text='Window can be closed now')
+
+def make_folders_and_move(data_folder,window):
+    paths.path_to_data_folder = data_folder
+    paths.path_to_organized_folder = make_folder(data_folder, 'Organized files')
+
+    paths.path_to_pre_anod_folder = make_folder(paths.path_to_organized_folder, '1. Pre anodizing spectrum')
+    anod_folder = make_folder(paths.path_to_organized_folder, '2. Anodizing spectrum')
+    pahs = make_folder(paths.path_to_organized_folder, '3. Post anodizing spectrum')
+    paths.path_to_fitted_plot_folder = make_folder(paths.path_to_organized_folder, '4. Anodizing Plots')
+    paths.path_to_fitted_data_folder = make_folder(paths.path_to_organized_folder, '5. Anodizing Data')
+
+    all_files = paths.path_to_data_folder.rglob(TXT_EXTENSION)
+    files = [x for x in all_files if x.is_file()]
+    copy_files(files, paths.path_to_anod_folder)
+
+    window['STOP'].update(text="Done reorganizing files", disabled=True)
+    window['SAVE'].update(disabled=False)
 
 def zip_dir(dir, filename, window):
     """Zip the provided directory without navigating to that directory using `pathlib` module"""
@@ -89,7 +87,6 @@ def zip_dir(dir, filename, window):
     new_filename = Path(str(filename) + '.zip')
     threading.Thread(target=update_zipping, daemon=True,
                      args=(window,)).start()
-
 
     with zipfile.ZipFile(new_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for entry in dir.rglob("*"):
@@ -105,7 +102,6 @@ def zip_files(path_to_zip: Path, zip_name: str, what_to_zip, window):
     output_filename = str(path_to_zip) + zip_name
     input_dir = str(what_to_zip)
 
-
     threading.Thread(target=update_zipping, daemon=True,
                      args=(window,)).start()
     shutil.make_archive(output_filename, 'zip', input_dir)
@@ -115,4 +111,3 @@ def zip_files(path_to_zip: Path, zip_name: str, what_to_zip, window):
 
     window['START'].update(text='Zipping completed')
     time.sleep(1)
-

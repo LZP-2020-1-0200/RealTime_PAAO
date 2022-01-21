@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 import RealTime_PAOO.common.shared as shared
 from RealTime_PAOO.common import paths
 from RealTime_PAOO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
-from RealTime_PAOO.data.directories import get_data_directory, make_folders_and_move_files, zip_dir
+from RealTime_PAOO.data.directories import get_data_directory, make_folders_and_move, move_spectrums, zip_dir
 from RealTime_PAOO.data.helpers import get_anodizing_time
 from RealTime_PAOO.data.national_instruments import close_all_tasks, ni_stop_the_power
 from RealTime_PAOO.data.read import get_reference_spectrum
@@ -59,16 +59,20 @@ def check_for_reference_spectrum(window):
     paths.ref_spectrum_path = ''
     shared.list_of_files = [file.name for file in paths.path_to_original_folder.rglob(TXT_EXTENSION)]
     if not shared.list_of_files:
-        validation_check(window['INC-DATA-IMG'], shared.correct_ref_file)
         shared.correct_ref_file = False
+        validation_check(window['INC-DATA-IMG'], shared.correct_ref_file)
         return
+
     if str(shared.list_of_files[-1]).lower() in ALLOWED_REF_SPEKTRS_NAME:
         shared.ref_spectrum_name = str(shared.list_of_files[-1])
     elif str(shared.list_of_files[0]).lower() in ALLOWED_REF_SPEKTRS_NAME:
         shared.ref_spectrum_name = str(shared.list_of_files[0])
+    else:
+        shared.correct_ref_file = False
+        validation_check(window['INC-DATA-IMG'], shared.correct_ref_file)
+        return
 
-    if shared.ref_spectrum_name and paths.path_to_original_folder.name and (
-            paths.path_to_original_folder / shared.ref_spectrum_name).is_file():
+    if paths.path_to_original_folder.name and (paths.path_to_original_folder / shared.ref_spectrum_name).is_file():
         paths.ref_spectrum_path = Path(paths.path_to_original_folder / shared.ref_spectrum_name)
         shared.reference_spectrum = get_reference_spectrum(paths.ref_spectrum_path)
         shared.correct_ref_file = True
@@ -86,14 +90,13 @@ def check_for_reference_spectrum(window):
             elif 'Spectra Averaged' in line:
                 shared.spectra_average = line.split(':')[1].split(' ')[1]
 
-
     with open(paths.anodization_parameters, 'a', newline='') as file:
-        writer = csv.writer(file, delimiter=':')
-        writer.writerow(['INTEGRATION TIME', shared.integration_time + ' ' + shared.integration_time_units])
-        writer.writerow(['SPECTRA AVERAGED', shared.spectra_average])
+        writer = csv.writer(file, delimiter='\t')
+        writer.writerow(['INTEGRATION TIME:', shared.integration_time + ' ' + shared.integration_time_units])
+        writer.writerow(['SPECTRA AVERAGED:', shared.spectra_average])
 
 
-def start_fitting_event(window, gui,digital_output_task, power_on=None, current_dict=None, real_time=True,):
+def start_fitting_event(window, gui, digital_output_task, power_on=None, current_dict=None, real_time=True, ):
     if not shared.correct_ref_file or not shared.correct_thickness:
         sg.popup_error('Check your inputs', title='Input error')
         return
@@ -102,7 +105,7 @@ def start_fitting_event(window, gui,digital_output_task, power_on=None, current_
     shared.fitting = True
     if real_time:
         threading.Thread(target=fitting_thread_real_time, daemon=True,
-                         args=(window, power_on, gui, current_dict,digital_output_task)).start()
+                         args=(window, power_on, gui, current_dict, digital_output_task)).start()
     else:
         threading.Thread(target=fitting_thread_post_factum, daemon=True,
                          args=(shared.reference_spectrum, gui, paths.data_folder)).start()
@@ -116,20 +119,23 @@ def stop_fitting_event(window, digital_output_task, list_of_tasks, pre_anod_inde
         close_all_tasks(list_of_tasks)
     except:
         pass
-
-    threading.Thread(target=make_folders_and_move_files, daemon=True,
+    if pre_anod_index:
+        threading.Thread(target=move_spectrums, daemon=True,
                      args=(pre_anod_index, post_anod_index, paths.path_to_original_folder, window)).start()
+    else:
+        threading.Thread(target=make_folders_and_move, daemon=True,
+                         args=(paths.data_folder,window)).start()
 
 
 def saving_event(window, current_dict, window_open):
+    if current_dict:
+        window_open.value = False
+    window['SAVE'].update(disabled=True)
+    window['START-ELECTRICITY'].update(disabled=True)
     threading.Thread(target=saving_data, args=(window, current_dict, window_open), daemon=True).start()
 
 
 def saving_data(window, current_dict, window_open):
-    window['SAVE'].update(disabled=True)
-    window_open.value = False
-    window['START-ELECTRICITY'].update(disabled=True)
-
     anodizing_time = get_anodizing_time(paths.path_to_anod_folder)
 
     spectrum_files = [file.name for file in paths.path_to_anod_folder.rglob(TXT_EXTENSION) if
@@ -144,11 +150,10 @@ def saving_data(window, current_dict, window_open):
     a.insert(4, str(int(anodizing_time[-1])) + 's')
     shared.filename = " ".join(a)
     with open(paths.anodization_parameters, 'a', newline='') as file:
-        writer = csv.writer(file, delimiter=':')
-        writer.writerow(['FITTED THICKNESS', str(round(shared.thickness_history[-1], 2)) + ' nm'])
-        writer.writerow(['ANODIZATION TIME', str(round(anodizing_time[-1], 2)) + ' s'])
+        writer = csv.writer(file, delimiter='\t')
+        writer.writerow(['FITTED THICKNESS:', str(round(shared.thickness_history[-1], 2)) + ' nm'])
+        writer.writerow(['ANODIZATION TIME:', str(round(anodizing_time[-1], 2)) + ' s'])
     paths.path_to_data_folder = paths.path_to_data_folder.rename(paths.path_to_desktop / shared.filename)
-    # zip_files(paths.path_to_desktop,shared.filename, paths.path_to_data_folder, window)
     zip_path = zip_dir(paths.path_to_data_folder, paths.path_to_desktop / shared.filename, window)
 
     upload_to_zenodo(zip_path.name, zip_path, window)

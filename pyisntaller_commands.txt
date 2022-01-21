@@ -1,1 +1,0 @@
-pyinstaller main.py --name 'RealTimePAAO' --add-data 'assets;assets' --add-data 'Refractive_info;Refractive_info' --icon 'assets/icon2.ico'
