@@ -66,10 +66,7 @@ def move_spectrums(anod_start_index, anod_end_index, data_folder, window):
 def make_folders_and_move(data_folder,window):
     paths.path_to_data_folder = data_folder
     paths.path_to_organized_folder = make_folder(data_folder, 'Organized files')
-
-    paths.path_to_pre_anod_folder = make_folder(paths.path_to_organized_folder, '1. Pre anodizing spectrum')
-    anod_folder = make_folder(paths.path_to_organized_folder, '2. Anodizing spectrum')
-    pahs = make_folder(paths.path_to_organized_folder, '3. Post anodizing spectrum')
+    paths.path_to_anod_folder = make_folder(paths.path_to_organized_folder, '2. Anodizing spectrum')
     paths.path_to_fitted_plot_folder = make_folder(paths.path_to_organized_folder, '4. Anodizing Plots')
     paths.path_to_fitted_data_folder = make_folder(paths.path_to_organized_folder, '5. Anodizing Data')
 

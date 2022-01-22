@@ -37,7 +37,7 @@ def get_milli_volts(power_on, display_value, time_and_measurment_dict, window_op
                 time_and_measurment_dict[time.time() - reference_time] = milli_voltage
 
 
-def get_mili_volts_test(power_on, display_value, time_and_measurment_dict, window_open):
+def get_milli_volts_test(power_on, display_value, time_and_measurment_dict, window_open):
     reference_time = 0
     while window_open.value:
         try:

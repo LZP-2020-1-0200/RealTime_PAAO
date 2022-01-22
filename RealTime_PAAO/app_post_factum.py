@@ -1,3 +1,6 @@
+import sys
+sys.path.append('C:\\Users\\Vladislavs\\PycharmProjects\\RealTime_PAAO\\')
+
 import PySimpleGUI as sg
 
 import RealTime_PAAO.common.shared as shared

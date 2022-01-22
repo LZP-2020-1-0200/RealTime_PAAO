@@ -31,6 +31,7 @@ def save_fitting_data(list_of_spectrum_files: list, all_real_data: list[list], a
         plt.draw()
         fig.savefig(plot_folder / (spectr[:-4] + '.png'))
         df.to_csv(calculated_data_folder / (spectr[:-4] + '.dat'), sep='\t', index=False, header=False)
+    window['START'].update(text=f'Completed saving plots')
 
 
 def save_thickness_per_time_data(thickness_hist, thickness_time, path_to_save):

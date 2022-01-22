@@ -19,7 +19,6 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
     files = [x for x in files if x.is_file()]
     spektri = files[:-1]
     anodizing_time = np.round(get_anodizing_time(data_folder), 2)
-    print(spektri)
     for i, (spektrs, time) in enumerate(zip(spektri, anodizing_time)):
 
         shared.current_real_data = get_real_data(spektrs, reference_spectrum, R0)

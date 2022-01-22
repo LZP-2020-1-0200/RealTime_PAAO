@@ -91,9 +91,9 @@ def check_for_reference_spectrum(window):
                 shared.spectra_average = line.split(':')[1].split(' ')[1]
 
     with open(paths.anodization_parameters, 'a', newline='') as file:
-        writer = csv.writer(file, delimiter='\t')
-        writer.writerow(['INTEGRATION TIME:', shared.integration_time + ' ' + shared.integration_time_units])
-        writer.writerow(['SPECTRA AVERAGED:', shared.spectra_average])
+        writer = csv.writer(file, delimiter=':')
+        writer.writerow(['INTEGRATION TIME', shared.integration_time + ' ' + shared.integration_time_units])
+        writer.writerow(['SPECTRA AVERAGED', shared.spectra_average])
 
 
 def start_fitting_event(window, gui, digital_output_task, power_on=None, current_dict=None, real_time=True, ):
@@ -143,21 +143,21 @@ def saving_data(window, current_dict, window_open):
     save_thickness_per_time_data(shared.thickness_history, anodizing_time, paths.path_to_organized_folder)
     save_fitting_data(spectrum_files, shared.real_data_history, shared.fitted_data_history,
                       paths.path_to_fitted_plot_folder, paths.path_to_fitted_data_folder, window)
-    save_current_per_time_data(current_dict, paths.path_to_organized_folder)
 
-    a = (shared.filename.split(' '))
-    a.insert(3, str(round(shared.thickness_history[-1], 2)) + 'nm')
-    a.insert(4, str(int(anodizing_time[-1])) + 's')
-    shared.filename = " ".join(a)
-    with open(paths.anodization_parameters, 'a', newline='') as file:
-        writer = csv.writer(file, delimiter='\t')
-        writer.writerow(['FITTED THICKNESS:', str(round(shared.thickness_history[-1], 2)) + ' nm'])
-        writer.writerow(['ANODIZATION TIME:', str(round(anodizing_time[-1], 2)) + ' s'])
-    paths.path_to_data_folder = paths.path_to_data_folder.rename(paths.path_to_desktop / shared.filename)
-    zip_path = zip_dir(paths.path_to_data_folder, paths.path_to_desktop / shared.filename, window)
+    if current_dict:
+        save_current_per_time_data(current_dict, paths.path_to_organized_folder)
+        a = (shared.filename.split(' '))
+        a.insert(3, str(round(shared.thickness_history[-1], 2)) + 'nm')
+        a.insert(4, str(int(anodizing_time[-1])) + 's')
+        shared.filename = " ".join(a)
+        with open(paths.anodization_parameters, 'a', newline='') as file:
+            writer = csv.writer(file, delimiter=':')
+            writer.writerow(['FITTED THICKNESS', str(round(shared.thickness_history[-1], 2)) + ' nm'])
+            writer.writerow(['ANODIZATION TIME', str(round(anodizing_time[-1], 2)) + ' s'])
+        paths.path_to_data_folder = paths.path_to_data_folder.rename(paths.path_to_desktop / shared.filename)
+        zip_path = zip_dir(paths.path_to_data_folder, paths.path_to_desktop / shared.filename, window)
+        upload_to_zenodo(zip_path.name, zip_path, window)
 
-    upload_to_zenodo(zip_path.name, zip_path, window)
-    # zip_files(str(paths.path_to_data_folder),str(paths.path_to_data_folder)+'.zip',window)
 
 
 def window_close_event(window_open, current_dict, window, digital_output_task, list_of_tasks):
