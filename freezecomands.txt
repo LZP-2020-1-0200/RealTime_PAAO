@@ -1,6 +1,0 @@
-pyisntaller:
-
-
-Nuitka:
-
-python -m nuitka --standalone RealTime_PAOO/app_real_time.py --enable-plugin=multiprocessing --enable-plugin=numpy
