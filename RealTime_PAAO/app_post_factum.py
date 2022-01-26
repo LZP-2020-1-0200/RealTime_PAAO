@@ -1,5 +1,5 @@
 import sys
-sys.path.append('C:\\Users\\Vladislavs\\PycharmProjects\\RealTime_PAAO\\')
+sys.path.append('C:\\Users\\optika\\PycharmProjects\\RealTime_PAAO\\')
 
 import PySimpleGUI as sg
 

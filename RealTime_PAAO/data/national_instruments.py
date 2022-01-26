@@ -75,6 +75,6 @@ def initialize_national_instruments():
         digital_output_task.write(True)
         list_of_tasks = [digital_output_task]
     else:
-        sg.popup_error('Error', 'No National instruments device found', 'Closing application...')
+        sg.popup_error('No National instruments device found', 'Closing application...')
         sys.exit(1)
     return digital_output_task, list_of_tasks

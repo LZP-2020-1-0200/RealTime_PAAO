@@ -1,5 +1,5 @@
 import sys
-sys.path.append('C:\\Users\\Vladislavs\\PycharmProjects\\RealTime_PAAO\\')
+sys.path.append('C:\\Users\\optika\\PycharmProjects\\RealTime_PAAO\\')
 from multiprocessing import freeze_support, Manager, Process, Value
 
 import PySimpleGUI as sg
@@ -15,11 +15,11 @@ from RealTime_PAAO.gui.metadata_gui.events import begin_event_loop
 from RealTime_PAAO.gui.metadata_gui.metadata_layout import DescriptionGraphicalInterface
 
 if __name__ == '__main__':
-    freeze_support()
+    digital_output_task, list_of_tasks = initialize_national_instruments()
     metadata_gui = DescriptionGraphicalInterface()
     begin_event_loop(metadata_gui)
 
-    digital_output_task, list_of_tasks = initialize_national_instruments()
+
     gui = GraphicalInterface()
     window = gui.window
 
