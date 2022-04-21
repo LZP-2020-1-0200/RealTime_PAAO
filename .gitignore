@@ -9,3 +9,4 @@ PAOO_GUI.spec
 main.py.pclprof
 main.spec
 /RealTimePAAO.spec
+__pycache__

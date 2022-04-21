@@ -16,6 +16,8 @@ FITTED_TITLE = 'Real and fitted spectrum'
 # Axis
 SPECTRUM_Y_LIM = [0.7, 0.95]
 SPECTRUM_Y_TICKS = np.arange(0.7, 0.9, 0.05)
+# SPECTRUM_Y_LIM = [1, 3]
+# SPECTRUM_Y_TICKS = np.arange(1, 3, 0.2)
 SPECTRUM_X_TICKS = np.arange(LAMBDA[0], LAMBDA[-1] + 1, 40)
 CURRENT_Y_LIM = [-2, 12]
 
