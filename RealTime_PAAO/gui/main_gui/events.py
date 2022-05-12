@@ -176,12 +176,14 @@ def window_close_event(window_open, current_dict, window, digital_output_task, l
             writer.writerow([x, y])
 
 
-def start_electricity_event(window, power_on):
+def start_electricity_event(window, power_on,digital_output_task):
+    digital_output_task.write(False)
     power_on.value = True
     enable_or_disable_power_button(window)
 
 
-def emergency_stop_event(window, power_on):
+def emergency_stop_event(window, power_on,digital_output_task):
+    digital_output_task.write(True)
     power_on.value = False
     shared.emergency_stop = True
     enable_or_disable_power_button(window)

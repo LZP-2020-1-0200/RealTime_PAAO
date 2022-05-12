@@ -53,7 +53,7 @@ if __name__ == '__main__':
             saving_event(window=window, current_dict=time_and_measurement_dict, window_open=window_open)
 
         if event == 'START-ELECTRICITY':
-            start_electricity_event(window=window, power_on=power_on)
+            start_electricity_event(window=window, power_on=power_on,digital_output_task=digital_output_task)
 
         if event == 'EMERGENCY_STOP_ELECTRICITY':
-            emergency_stop_event(window=window, power_on=power_on)
+            emergency_stop_event(window=window, power_on=power_on,digital_output_task=digital_output_task)
