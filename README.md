@@ -23,5 +23,5 @@ py -m pip install -r path/to/project/requirements.txt
 
 7. Run project by running one of these commands in cmd
 
-For post factum approximation : `py path/to/project/RealTime_PAOO/app_post_factum.py`
-For real time approximation : `py path/to/project/RealTime_PAOO/app_real_time.py`
+- For post factum approximation : `py path/to/project/RealTime_PAOO/app_post_factum.py`
+- For real time approximation : `py path/to/project/RealTime_PAOO/app_real_time.py`
