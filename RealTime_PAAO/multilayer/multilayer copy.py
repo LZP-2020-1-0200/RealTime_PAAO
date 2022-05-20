@@ -1,8 +1,9 @@
-# import sys
-# sys.path.append(r"C:\Users\Vladislavs\PycharmProjects\RealTime_PAAO")
-# import ctypes
-# import cmath
-# import math
+import sys
+sys.path.append(r"C:\Users\Vladislavs\PycharmProjects\RealTime_PAAO")
+import ctypes
+
+import cmath
+import math
 
 from RealTime_PAAO.common.constants import INTERCEPT, LAMBDA, SLOPE
 from RealTime_PAAO.multilayer.ntilde import nk, nk_water,nk_al,nk_al2o3
@@ -14,37 +15,39 @@ def theoretical_thickness(anod_time):
 
 # 3. parnesta no octaves tīrs python
 
-# def mat_mul(mat_a, mat_b):
-#     iterable_b = list(zip(*mat_b))
-#     return [[sum(a * b for a, b in zip(row_a, col_b)) for col_b in iterable_b] for row_a in mat_a]
+def mat_mul(mat_a, mat_b):
+    iterable_b = list(zip(*mat_b))
+    return [[sum(a * b for a, b in zip(row_a, col_b)) for col_b in iterable_b] for row_a in mat_a]
 
-# ntilde = [list(nk_water), list(nk_al2o3), list(nk_al2o3)]
+nk = [list(nk_water), list(nk_al2o3), list(nk_al2o3)]
 
-# def multilayer(wavelength, thickness, normalization):
-#     R = []
-#     for a in range(len(wavelength)):
-#         nk = [complex(nk_water[a], 0), complex(nk_al2o3[a], 0), nk_al[a]]
-#         tau = 2 * nk[0] / (nk[0] + nk[1])
-#         rho = (nk[0] - nk[1]) / (nk[0] + nk[1])
-#         T = [[1 / tau, rho / tau], [rho / tau, 1 / tau]]
-#         M = mat_mul([[1, 0], [0, 1]], T)
-#         k = nk[1] * 2 * math.pi / wavelength[a]
-#         P = [[cmath.exp(complex(0, 1) * k * thickness), 0],
-#              [0, cmath.exp(-complex(0, 1) * k * thickness)]]
-#         M = mat_mul(M, P)
-#         Ef = [[1],
-#               [((nk[1] - nk[2]) / (nk[1] + nk[2]))]]
-#         E0 = mat_mul(M, Ef)
-#         E0 = [E0[0][0], E0[1][0]]
-#         R_calculated = abs(E0[1] / E0[0]) ** 2 * normalization
-#         R.append(R_calculated)
-#     return R
+def multilayer(wavelength, thickness, normalization):
+    R = []
+    for a in range(len(wavelength)):
+    # for a in range(2):
+        nk = [complex(nk_water[a], 0), complex(nk_al2o3[a], 0), nk_al[a]]
+        tau = 2 * nk[0] / (nk[0] + nk[1])
+        rho = (nk[0] - nk[1]) / (nk[0] + nk[1])
+        T = [[1 / tau, rho / tau], [rho / tau, 1 / tau]]
+        M = mat_mul([[1, 0], [0, 1]], T)
+        k = nk[1] * 2 * math.pi / wavelength[a]
+        P = [[cmath.exp(complex(0, 1) * k * thickness), 0],
+             [0, cmath.exp(-complex(0, 1) * k * thickness)]]
+        M = mat_mul(M, P)
+        Ef = [[1],
+              [((nk[1] - nk[2]) / (nk[1] + nk[2]))]]
+        E0 = mat_mul(M, Ef)
+        E0 = [E0[0][0], E0[1][0]]
+        R_calculated = abs(E0[1] / E0[0]) ** 2 * normalization
+        R.append(R_calculated)
+    return R
 
-
-
-
+R0 = multilayer(LAMBDA, 0, 1)
+print(R0)
 # 4. Izmantojot Numpy
 # import numpy as np
+#
+#
 # def multilayer(wavelength, thickness, normalization):
 #     R = np.zeros(len(wavelength))
 #     for a in np.arange(len(wavelength)):
@@ -64,15 +67,21 @@ def theoretical_thickness(anod_time):
 #     return R
 
 # 5. numpy + vektorizācija
-import numpy as np
-def multilayer(wavelength, thickness, normalization): 
-    P = np.array([[np.exp(complex(0, 1) * k * thickness), np.zeros(len(wavelength))],
-                  [np.zeros(len(wavelength)), np.exp(-complex(0, 1) * k * thickness)]])
-    S = M @ P.T
-    Ef = np.array([[np.ones(len(wavelength))], [(nk[1] - nk[2]) /
-                                       (nk[1] + nk[2])]]).T.reshape(len(wavelength), 2, 1)
-    E_0 = S @ Ef
-    return (abs(E_0[0:len(wavelength), 1] / E_0[0:len(wavelength), 0]) ** 2)[:, 0] * normalization
+# import numpy as np
+# def multilayer(x, thickness, normalization):
+#     M_ = np.full((len(LAMBDA), 2, 2), [[1, 0], [0, 1]])
+#     tau = 2 * ntilde[0] / (ntilde[0] + ntilde[1])
+#     rho = (ntilde[0] - ntilde[1]) / (ntilde[0] + ntilde[1])
+#     T = np.array([[np.ones(len(LAMBDA)), rho], [rho, np.ones(len(LAMBDA))]]) / tau
+#     M = M_ @ T.T
+#     k = ntilde[1] * 2 * np.pi / LAMBDA
+#     P = np.array([[np.exp(complex(0, 1) * k * thickness), np.zeros(len(x))],
+#                   [np.zeros(len(x)), np.exp(-complex(0, 1) * k * thickness)]])
+#     S = M @ P.T
+#     Ef = np.array([[np.ones(len(x))], [(ntilde[1] - ntilde[2]) /
+#                                        (ntilde[1] + ntilde[2])]]).T.reshape(len(x), 2, 1)
+#     E_0 = S @ Ef
+#     return (abs(E_0[0:len(x), 1] / E_0[0:len(x), 0]) ** 2)[:, 0] * normalization
 
 # 6. numba
 # import numpy as np
@@ -90,8 +99,8 @@ def multilayer(wavelength, thickness, normalization):
 #             temp.append(s)
 #         c.append(temp)
 #     return c
-
-
+#
+#
 # @njit(cache=True)
 # def multilayer_helper(wavelength, thickness, normalization):
 #     R = np.zeros(len(wavelength))
@@ -109,7 +118,9 @@ def multilayer(wavelength, thickness, normalization):
 #         Ef = np.array([[complex(1,0)], [temp]])
 #         E0 = mat_mul(M , Ef)
 #         E0 = [E0[0][0], E0[1][0]]
-#         R[a] = (abs(E0[1] / E0[0])) ** 2 * normalization
+#         b = (abs(E0[1] / E0[0])) ** 2 * normalization
+#         # print(a* normalization)
+#         R[a] = b #(abs(E0[1] / E0[0])) ** 2 * normalization
 #     return R
 #
 # def multilayer(wavelength, thickness, normalization):
@@ -120,10 +131,10 @@ def multilayer(wavelength, thickness, normalization):
 # -----------------------------------------------------------
 
 # 7. cython
-# from cython_multilayer import multilayer
-#
-# R0 = multilayer(LAMBDA, 0, 1)
-# print(R0)
+from cython_multilayer import multilayer
+
+R0 = multilayer(LAMBDA, 0, 1)
+print(R0)
 
 # 8 ctypes
 # libObject = ctypes.CDLL("C:\\Users\\Vladislavs\\PycharmProjects\\RealTime_PAAO\\RealTime_PAAO\\multi.so", winmode=0)
@@ -173,12 +184,4 @@ def multilayer(wavelength, thickness, normalization):
 
 
 # print(multilayer_)
-# nk = np.array([nk_water, nk_al2o3, nk_al])
-tau = 2 * nk[0] / (nk[0] + nk[1])
-rho = (nk[0] - nk[1]) / (nk[0] + nk[1])
-T = np.array([[np.ones(len(LAMBDA)), rho], [
-                rho, np.ones(len(LAMBDA))]]) / tau
-M = np.full((len(LAMBDA), 2, 2), [[1, 0], [0, 1]]) @ T.T
-k = nk[1] * 2 * np.pi / LAMBDA
-
 R0 = multilayer(LAMBDA, 0, 1)

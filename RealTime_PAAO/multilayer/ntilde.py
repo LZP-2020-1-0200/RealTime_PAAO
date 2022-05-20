@@ -9,4 +9,4 @@ from RealTime_PAAO.data.read import get_al203_data, get_al_data_from_file, get_w
 nk_water = interpolate(*get_water_data_from_file(path_to_water_refractive_info, 1e3), LAMBDA)
 nk_al2o3 = get_al203_data(len(nk_water))
 nk_al = interpolate(*get_al_data_from_file(path_to_al_refractive_info, 1e3), LAMBDA)
-ntilde = np.array([nk_water, nk_al2o3, nk_al])
+nk = np.array([nk_water, nk_al2o3, nk_al])

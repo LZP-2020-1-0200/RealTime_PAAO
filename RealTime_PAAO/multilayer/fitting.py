@@ -19,13 +19,18 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
     files = [x for x in files if x.is_file()]
     spektri = files[:-1]
     anodizing_time = np.round(get_anodizing_time(data_folder), 2)
-    for i, (spektrs, time) in enumerate(zip(spektri, anodizing_time)):
+    timeess = []
+    for i, (spektrs, time2) in enumerate(zip(spektri, anodizing_time)):
 
         shared.current_real_data = get_real_data(spektrs, reference_spectrum, R0)
         shared.real_data_history.append(shared.current_real_data)
+        start_time = time.time()
         shared.fitted_parameters, var_matrix = curve_fit(multilayer, LAMBDA, shared.current_real_data,
-                                                         p0=(theoretical_thickness(time), shared.fitted_parameters[1]))
-
+                                                         p0=(theoretical_thickness(time2), shared.fitted_parameters[1]))
+        end_time = (time.time() - start_time)
+        # print(end_time)
+        # time.sleep(0.0166)
+        timeess.append(end_time)
         current_thickness = shared.fitted_parameters[0]
         standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 3)
 
@@ -34,7 +39,7 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
         shared.fitted_data_history.append(shared.current_fitted_data)
 
         update_info_element(gui.window, INFO_THICKNESS, round(current_thickness, 2), 'nm')
-        update_info_element(gui.window, INFO_ANOD_TIME, round(time, 3), 's')
+        update_info_element(gui.window, INFO_ANOD_TIME, round(time2, 3), 's')
         update_info_element(gui.window, INFO_FILE, spektrs.name)
         update_info_element(gui.window, INFO_ERROR, standard_error)
 
@@ -50,6 +55,7 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
             gui.ax.set_ylim(gui.ax.get_ylim()[0], gui.ax.get_ylim()[1] + 30)
 
         redraw_plots(gui.fig_agg, gui.fig_agg2)
+    # np.savetxt("C:\\Users\\Vladislavs\\Desktop\\10.cython.txt",timeess,delimiter=',')
 
 
 def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict, digital_output_task):
