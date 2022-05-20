@@ -10,3 +10,7 @@ main.py.pclprof
 main.spec
 /RealTimePAAO.spec
 __pycache__
+/dist
+/build
+*.spec
+*cython*

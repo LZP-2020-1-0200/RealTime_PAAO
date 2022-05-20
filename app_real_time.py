@@ -1,7 +1,4 @@
-import sys
-sys.path.append('C:\\Users\\optika\\PycharmProjects\\RealTime_PAAO\\')
 from multiprocessing import freeze_support, Manager, Process, Value
-
 import PySimpleGUI as sg
 
 from RealTime_PAAO.common import shared

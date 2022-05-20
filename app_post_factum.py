@@ -1,6 +1,3 @@
-import sys
-sys.path.append('C:\\Users\\optika\\PycharmProjects\\RealTime_PAAO\\')
-
 import PySimpleGUI as sg
 
 import RealTime_PAAO.common.shared as shared

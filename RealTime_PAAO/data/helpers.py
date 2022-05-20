@@ -6,10 +6,10 @@ from scipy.interpolate import interp1d
 from RealTime_PAAO.common.constants import ALLOWED_REF_SPEKTRS_NAME, TXT_EXTENSION
 
 
-def split_to_arrays(data, conversion=1):
+def split_to_arrays(data, conversion=1, hey = 0):
     if data.shape[1] == 3:  # check if real or complex numbers are present
         return [data[:, 0] * conversion, data[:, 1] + np.complex(0, 1) * data[:, 2]]
-    return [data[:, 0] * conversion, data[:, 1]]
+    return [data[:, 0] * conversion, data[:, 1] + hey]
 
 
 def interpolate(x_data, y_data, new_x_data):

@@ -9,18 +9,18 @@ from RealTime_PAAO.data.helpers import interpolate, split_to_arrays
 # to the ultraviolet region, Appl. Opt. 46, 3811-3820 (2007)
 def get_water_data_from_file(filename, conversion):
     data = np.genfromtxt(filename, delimiter='\t', encoding='utf-8')
-    return split_to_arrays(data, conversion)
+    return split_to_arrays(data, conversion, 0j)
 
 
 # A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for
 # vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998)
 def get_al_data_from_file(filename, conversion):
     data = np.genfromtxt(filename, delimiter=' ', skip_header=9, skip_footer=3, encoding='utf-8')
-    return split_to_arrays(data, conversion)
+    return split_to_arrays(data, conversion, 0j)
 
 
 def get_al203_data(length):
-    return np.full(length, 1.65)
+    return np.full(length, 1.65+0j)
 
 
 def get_real_data(current_file, reference_spectrum, R0):
