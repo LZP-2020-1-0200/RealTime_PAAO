@@ -71,6 +71,7 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
     start_anod_time = 0
     anod_time_history = []
     current_thickness = 0
+    current_anod_time = 0
     i = 0
 
     while shared.fitting:
@@ -107,39 +108,39 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
             current_real_data = get_real_data(current_file, shared.reference_spectrum, R0)
             shared.real_data_history.append(current_real_data)
 
+            shared.fitted_parameters, var_matrix = curve_fit(
+                multilayer,
+                LAMBDA,
+                current_real_data,
+                p0=(theoretical_thickness(current_anod_time if current_anod_time else 0), shared.fitted_parameters[1]),
+            )
+            current_thickness = shared.fitted_parameters[0]
+            current_fitted_data = multilayer(LAMBDA, *shared.fitted_parameters)
+            standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 2)
+            update_info_element(window, INFO_ERROR, standard_error)
+            update_info_element(window, INFO_THICKNESS, round(current_thickness), "nm")
+
+            if (gui.ax.get_xlim()[1]) - current_anod_time < 30:
+                gui.ax.set_xlim(0, gui.ax.get_xlim()[1] + 50)
+
+            if (gui.ax.get_ylim()[1]) - current_thickness < 20:
+                gui.ax.set_ylim(gui.ax.get_ylim()[0], gui.ax.get_ylim()[1] + 30)
+
+            gui.fitted_spectra_line.set_ydata(current_fitted_data)
+
             # if anodizing is not started yet, just plot spectrums
             if start_anod_time != 0 and power_on.value:
                 current_anod_time = time.time() - start_anod_time
-                shared.fitted_parameters, var_matrix = curve_fit(
-                    multilayer,
-                    LAMBDA,
-                    current_real_data,
-                    p0=(theoretical_thickness(current_anod_time), shared.fitted_parameters[1]),
-                )
-
                 anod_time_history.append(current_anod_time)
-                current_thickness = shared.fitted_parameters[0]
+
                 shared.thickness_history.append(current_thickness)
-                current_fitted_data = multilayer(LAMBDA, *shared.fitted_parameters)
                 shared.fitted_data_history.append(current_fitted_data)
-
-                standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 2)
-                update_info_element(window, INFO_ERROR, standard_error)
-                update_info_element(window, INFO_THICKNESS, round(current_thickness), "nm")
-
-                if (gui.ax.get_xlim()[1]) - current_anod_time < 30:
-                    gui.ax.set_xlim(0, gui.ax.get_xlim()[1] + 50)
-
-                if (gui.ax.get_ylim()[1]) - current_thickness < 20:
-                    gui.ax.set_ylim(gui.ax.get_ylim()[0], gui.ax.get_ylim()[1] + 30)
 
                 gui.thickness_per_time_line.set_xdata(anod_time_history)
                 gui.thickness_per_time_line.set_ydata(shared.thickness_history)
                 gui.current_per_time_line.set_data(
                     time_and_measurement_dict.keys()[::15], time_and_measurement_dict.values()[::15]
                 )
-
-                gui.fitted_spectra_line.set_ydata(current_fitted_data)
 
             gui.real_spectra_line.set_ydata(current_real_data)
 
@@ -164,6 +165,6 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
                 window["START"].update(disabled=True, text="Done", button_color="green")
                 # window['SAVE'].update(disabled=False)
                 enable_or_disable_power_button(window)
-                gui.fitted_spectra_line.set_ydata(ZEROS)
+                # gui.fitted_spectra_line.set_ydata(ZEROS)
 
             i += 1
