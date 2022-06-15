@@ -4,15 +4,7 @@ from datetime import datetime
 import numpy as np
 from RealTime_PAAO.common import paths
 from RealTime_PAAO.common import shared as shared
-from RealTime_PAAO.common.constants import (
-    INFO_ANOD_TIME,
-    INFO_ERROR,
-    INFO_FILE,
-    INFO_THICKNESS,
-    LAMBDA,
-    TXT_EXTENSION,
-    ZEROS,
-)
+from RealTime_PAAO.common.constants import INFO_ANOD_TIME, INFO_FILE, INFO_THICKNESS, LAMBDA, TXT_EXTENSION
 from RealTime_PAAO.data.current_control import stop_power
 from RealTime_PAAO.data.helpers import construct_spectra_filenames_dict, get_anodizing_time, get_spectra_paths
 from RealTime_PAAO.data.read import get_real_data
@@ -32,7 +24,7 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
         shared.current_real_data = get_real_data(spektrs, reference_spectrum, R0)
         shared.real_data_history.append(shared.current_real_data)
 
-        shared.fitted_parameters, var_matrix = curve_fit(
+        shared.fitted_parameters, _ = curve_fit(
             multilayer,
             LAMBDA,
             shared.current_real_data,
@@ -40,7 +32,6 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
         )
 
         current_thickness = shared.fitted_parameters[0]
-        standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 3)
 
         shared.thickness_history.append(current_thickness)
         shared.current_fitted_data = multilayer(LAMBDA, current_thickness, shared.fitted_parameters[1])
@@ -49,7 +40,6 @@ def fitting_thread_post_factum(reference_spectrum, gui, data_folder):
         update_info_element(gui.window, INFO_THICKNESS, round(current_thickness), "nm")
         update_info_element(gui.window, INFO_ANOD_TIME, round(time2, 2), "s")
         update_info_element(gui.window, INFO_FILE, spektrs.name)
-        update_info_element(gui.window, INFO_ERROR, standard_error)
 
         gui.thickness_per_time_line.set_xdata(anodizing_time[:i])
         gui.thickness_per_time_line.set_ydata(shared.thickness_history[:i])
@@ -108,7 +98,7 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
             current_real_data = get_real_data(current_file, shared.reference_spectrum, R0)
             shared.real_data_history.append(current_real_data)
 
-            shared.fitted_parameters, var_matrix = curve_fit(
+            shared.fitted_parameters, _ = curve_fit(
                 multilayer,
                 LAMBDA,
                 current_real_data,
@@ -116,8 +106,6 @@ def fitting_thread_real_time(window, power_on, gui, time_and_measurement_dict):
             )
             current_thickness = shared.fitted_parameters[0]
             current_fitted_data = multilayer(LAMBDA, *shared.fitted_parameters)
-            standard_error = round(np.sqrt(np.diagonal(var_matrix))[0], 2)
-            update_info_element(window, INFO_ERROR, standard_error)
             update_info_element(window, INFO_THICKNESS, round(current_thickness), "nm")
 
             if (gui.ax.get_xlim()[1]) - current_anod_time < 30:
