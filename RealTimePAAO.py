@@ -1,10 +1,10 @@
-from multiprocessing import Manager, Process, Value, freeze_support
+from multiprocessing import Manager, Process, Value
 
 import PySimpleGUI as sg
 
 from RealTime_PAAO.common import shared
 from RealTime_PAAO.common.constants import INFO_CURRENT
-from RealTime_PAAO.data.national_instruments import get_milli_volts, initialize_national_instruments
+from RealTime_PAAO.data.current_control import check_server_status, get_millivolts
 from RealTime_PAAO.gui.main_gui.events import (
     check_for_reference_spectrum,
     emergency_stop_event,
@@ -21,7 +21,7 @@ from RealTime_PAAO.gui.metadata_gui.metadata_layout import DescriptionGraphicalI
 
 
 def main():
-    digital_output_task, list_of_tasks = initialize_national_instruments()
+    check_server_status()
     metadata_gui = DescriptionGraphicalInterface()
     begin_event_loop(metadata_gui)
 
@@ -33,7 +33,7 @@ def main():
     display_value = Value("f", 0)
     power_on = Value("i", False)
     Process(
-        target=get_milli_volts,
+        target=get_millivolts,
         args=(
             power_on,
             display_value,
@@ -44,16 +44,14 @@ def main():
     ).start()
 
     while True:
-        event, values = window.read(timeout=100)
-        update_info_element(window, INFO_CURRENT, round(display_value.value, 3), "mA")
+        event, _ = window.read(timeout=50)
+        update_info_element(window, INFO_CURRENT, round(display_value.value, 2), "mA")
 
         if event == sg.WIN_CLOSED:
             window_close_event(
                 window_open=window_open,
                 current_dict=time_and_measurement_dict,
                 window=window,
-                digital_output_task=digital_output_task,
-                list_of_tasks=list_of_tasks,
             )
             break
 
@@ -64,7 +62,6 @@ def main():
             start_fitting_event(
                 window=window,
                 gui=gui,
-                digital_output_task=digital_output_task,
                 power_on=power_on,
                 current_dict=time_and_measurement_dict,
             )
@@ -72,8 +69,6 @@ def main():
         if event == "STOP":
             stop_fitting_event(
                 window=window,
-                digital_output_task=digital_output_task,
-                list_of_tasks=list_of_tasks,
                 pre_anod_index=shared.anod_starting_index,
                 post_anod_index=shared.anod_ending_index,
             )
@@ -82,7 +77,7 @@ def main():
             saving_event(window=window, current_dict=time_and_measurement_dict, window_open=window_open)
 
         if event == "START-ELECTRICITY":
-            start_electricity_event(window=window, power_on=power_on, digital_output_task=digital_output_task)
+            start_electricity_event(window=window, power_on=power_on)
 
         if event == "EMERGENCY_STOP_ELECTRICITY":
-            emergency_stop_event(window=window, power_on=power_on, digital_output_task=digital_output_task)
+            emergency_stop_event(window=window, power_on=power_on)
