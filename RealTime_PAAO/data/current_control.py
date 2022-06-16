@@ -1,13 +1,20 @@
+import json
 import sys
+from ipaddress import ip_address
 
 import PySimpleGUI as sg
 from requests import exceptions, get
 
+with open("config.json") as file:
+    data = json.load(file)
+    ip_address = "http://" + data["Arduino IP"]
+
 
 def get_millivolts(power_on, display_value, time_and_measurement_dict, window_open):
     reference_time = 0
+    ip_address_ = ip_address
     while window_open.value:
-        response = get("http://192.168.5.226/")
+        response = get(ip_address_)
 
         if response.status_code != 200:
             continue
@@ -29,17 +36,17 @@ def get_millivolts(power_on, display_value, time_and_measurement_dict, window_op
 
 
 def stop_power():
-    get("http://192.168.5.226/stop")
+    get(f"{ip_address}/stop")
 
 
 def start_power():
-    get("http://192.168.5.226/start")
+    get(f"{ip_address}/start")
 
 
 def check_server_status():
 
     try:
-        get("http://192.168.5.226/", timeout=5)
+        get(ip_address, timeout=5)
     except exceptions.RequestException as e:
         sg.popup_error(e, "Closing application...")
         sys.exit(1)
