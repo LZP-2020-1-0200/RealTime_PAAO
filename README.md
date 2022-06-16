@@ -1,9 +1,9 @@
 # RealTime_PAAO
 
-## Install Instructions
+## Installation Instruction
 
-1. Download [Realtime_PAAO.zip](https://github.com/LZP-2020-1-0200/RealTime_PAAO/releases/latest/download/Realtime_PAAO.zip) for real-time aproximation or [PostFactum_PAAO.zip](https://github.com/LZP-2020-1-0200/RealTime_PAAO/releases/latest/download/PostFactum_PAAO.zip) for approximation of existing files
+1. Download and unzip [RealtimePAAO.zip](https://github.com/LZP-2020-1-0200/RealTime_PAAO/releases/latest/download/RealtimePAAO.zip)
 
-2. For real-time approximation [NI-DAQmx software](https://www.ni.com/en-us/support/downloads/drivers/download.ni-daqmx.html#445931) must be installed
+2. Edit `config.json`with proper values
 
-3. Unzip archive and launch `app_real_time.exe` or `app_post_factum.exe`
+3. Launch `RealTimePAAO.exe` and choose Real-time fitting or Post-factum fitting
