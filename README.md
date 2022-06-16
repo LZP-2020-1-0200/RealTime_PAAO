@@ -21,11 +21,11 @@
 
 4. Fill fields with information about the sample and press *Submit*. After pressing *Submit* new folder will be created on the desktop.
 **Important:** Do not use special characters, in these fields, such as ":" "/" " " etc.
-**Important:** If folder is opened, close it before proceeding, otherwise it will lead to errors in further steps
 ![filled](readme_pics/realtime/04_fill_metadata.png)
 ![folder](readme_pics/realtime/05_folder.png)
 
 5. Using SpectraSuite software create a reference spectrum with the name `ref_spektrs.txt`as tab-delimited with headers. Copy this file to `Originals`
+**Important:** If folder `Originals` or any other file or folder is opened in file explorer, close it before proceeding, otherwise it will lead to errors in further steps
 ![ref_spektrs](readme_pics/realtime/06_ref_spektrs.png)
 
 6. Press button *Check for reference spectrum*, if the reference spectrum is found in `Originals` folder, then a green tick appears, otherwise red cross appears
