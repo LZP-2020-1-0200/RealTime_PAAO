@@ -37,11 +37,11 @@
 ![Start file listening](readme_pics/realtime/08_waitig_for_files.png)
 
 8. Using SpectraSuite software choose File->Save->Save Spectrum
-a) Save options: **Wait at least 200 ms** (no less than 200 ms)
-b) File Type: **Tab Delimited**
-c) Save to Directory: **`path/to/Originals`**
-d) Base Filename: **R**
-e) Padding digits: **5**
+   a) Save options: **Wait at least 200 ms** (no less than 200 ms)
+   b) File Type: **Tab Delimited**
+   c) Save to Directory: **`path/to/Originals`**
+   d) Base Filename: **R**
+   e) Padding digits: **5**
 ![spectrusite settings](readme_pics/realtime/09_spectrusuite.png)
 
 9. In SpectraSuite start spectra reading and saving
@@ -66,7 +66,7 @@ e) Padding digits: **5**
 **Note:** This process might appear stuck if folder was opened before zipping started. In this, a case close the program and archive it and upload it to Zenodo manually
 
 15. After zipping process is finished, automatic uploading to Zenodo repository will begin
-**Note:** If the access token and bucket URL in `config.json` file are correct.
+**Note:** Only if the access token and bucket URL in `config.json` file are correct.
 
 ### Post-Factum fitting
 
