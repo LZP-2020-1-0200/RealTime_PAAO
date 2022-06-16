@@ -1,3 +1,5 @@
+from multiprocessing import freeze_support
+
 import PySimpleGUI as sg
 
 from PostFactumPAAO import main as post_factum
@@ -38,4 +40,5 @@ def main():
 
 
 if __name__ == "__main__":
+    freeze_support()
     main()
