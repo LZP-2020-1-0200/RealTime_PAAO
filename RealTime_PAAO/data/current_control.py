@@ -36,17 +36,17 @@ def get_millivolts(power_on, display_value, time_and_measurement_dict, window_op
 
 
 def stop_power():
-    get(f"{ip_address}/stop")
+    get(f"{ip_address}/off")
 
 
 def start_power():
-    get(f"{ip_address}/start")
+    get(f"{ip_address}/on")
 
 
 def check_server_status():
-
     try:
         get(ip_address, timeout=5)
+        get(f"{ip_address}/off")
     except exceptions.RequestException as e:
         sg.popup_error(e, "Closing application...")
         sys.exit(1)
