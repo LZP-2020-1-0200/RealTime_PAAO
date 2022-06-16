@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 from RealTime_PAAO.common import shared
 from RealTime_PAAO.common.constants import INFO_CURRENT
 from RealTime_PAAO.data.current_control import check_server_status, get_millivolts
+from RealTime_PAAO.data.upload import check_access_token, check_bucket_url
 from RealTime_PAAO.gui.main_gui.events import (
     check_for_reference_spectrum,
     emergency_stop_event,
@@ -22,6 +23,8 @@ from RealTime_PAAO.gui.metadata_gui.metadata_layout import DescriptionGraphicalI
 
 def main():
     check_server_status()
+    check_access_token() and check_bucket_url()
+
     metadata_gui = DescriptionGraphicalInterface()
     begin_event_loop(metadata_gui)
 

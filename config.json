@@ -1,4 +1,5 @@
 {
     "Arduino IP": "192.168.5.226",
-    "Zenodo API": ""
+    "Access Token": "INSERT ZENODO API TOKEN HERE",
+    "Bucket URL": "INSERT BUCKET URL HERE"
 }
