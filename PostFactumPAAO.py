@@ -13,6 +13,8 @@ from RealTime_PAAO.gui.main_gui.main_layout import GraphicalInterface
 def main():
     gui = GraphicalInterface()
     window = gui.window
+    window["START-ELECTRICITY"].update(disabled=True)
+
     shared.correct_thickness = True
     while True:
         event, _ = window.read()
