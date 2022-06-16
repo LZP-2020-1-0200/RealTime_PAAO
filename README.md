@@ -21,7 +21,7 @@
 3. If `config.json` is edited correctly, then the graphical interface will appear without errors.
 ![Metadata GUI](readme_pics/03_metadata.png)
 
-4. Fill fields with information about the sample and press Submit. After pressing Submit new folder will be created on the desktop.
+4. Fill fields with information about the sample and press *Submit*. After pressing *Submit* new folder will be created on the desktop.
 **Important:** Do not use special characters, in these fields, such as ":" "/" " " etc.
 **Important:** If folder is opened, close it before proceeding, otherwise it will lead to errors in further steps
 ![filled](readme_pics/04_fill_metadata.png)
