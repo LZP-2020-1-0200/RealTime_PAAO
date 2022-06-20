@@ -1,5 +1,6 @@
 import json
 import sys
+import time
 from ipaddress import ip_address
 
 import PySimpleGUI as sg
@@ -19,20 +20,23 @@ def get_millivolts(power_on, display_value, time_and_measurement_dict, window_op
         if response.status_code != 200:
             continue
 
-        response_text = response.text
-        response_list = response_text.split(",")
+        response_json: dict[str, dict[str, list[float]]] = response.json()
 
-        milliamps, timestamp = float(response_list[0]), float(response_list[1])
-
-        display_value.value = round(milliamps, 2)
-
-        if not power_on.value:
+        if not response_json:
+            time.sleep(0.05)
             continue
 
-        if reference_time == 0:
-            reference_time = timestamp
+        for key in response_json:
+            timestamp, milli_amperes = response_json[key]["data"]
+            timestamp /= 1000
 
-        time_and_measurement_dict[timestamp - reference_time] = milliamps
+            if reference_time == 0 and power_on.value:
+                reference_time = timestamp
+
+            if reference_time and power_on.value:
+                time_and_measurement_dict[timestamp - reference_time] = milli_amperes
+
+        display_value.value = round(milli_amperes, 2)
 
 
 def stop_power():
