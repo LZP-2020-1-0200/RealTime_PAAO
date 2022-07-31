@@ -79,3 +79,8 @@
 4. After all files have been processed, press *Stop* button to stop fitting process and reorganize files.
 
 5. After reorganization press *Save plots* to save all plots and data
+
+### Acknowledgements
+Funding institution: Latvian Council of Science
+Project title: Nanostructured multilayer hybrid coatings for interferometric and optoelectronic sensors
+Funding number: LZP-2020/1-0200
